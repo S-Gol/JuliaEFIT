@@ -1,5 +1,4 @@
 module EFIT
-    using StaticArrays
     export EFITGrid, EFITMaterial, IsoMat, IsoSim
     abstract type EFITMaterial end
     struct IsoMat <: EFITMaterial
@@ -52,7 +51,7 @@ module EFIT
     function IsoStep!(grid::EFITGrid)
         function getAveragedρ(I,dir)
             offset = CartesianIndex(1,0,0)
-            return 2 / ((grid.materials[grid.matIdx[I]]).ρ+(grid.materials[grid.matIdx[I+offset]]).ρ)
+            return (2.0 / ((grid.materials[grid.matIdx[I]]).ρ+(grid.materials[grid.matIdx[I+offset]]).ρ))
         end
         offsets = [CartesianIndex(1,0,0),CartesianIndex(0,1,0),CartesianIndex(0,0,1)]
 
@@ -75,7 +74,6 @@ module EFIT
             #Update the diagonal stresses
             λ = grid.materials[grid.matIdx[N]].λ
             λ2μ = (λ + grid.materials[grid.matIdx[N]].μ*2)
-            
             for dir in 1:3
                 vComp = 0
                 for i in 1:3
@@ -87,10 +85,23 @@ module EFIT
                 end
                 grid.σ′[N,dir,dir]=vComp/grid.ds
             end
+            #Update the shear stresses
+            for i in 1:3
+                for j in (i+1):3
+                    μΔs = (1.0/grid.ds) * 4.0/(
+                        1.0/grid.materials[grid.matIdx[N]].μ + 1.0/grid.materials[grid.matIdx[N+offsets[i]]].μ +
+                        1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ + 1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ
+                    )
+                    σT = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+grid.v[N+offsets[j],i]-grid.v[N,i])
+                    grid.σ′[N,i,j]=σT
+                    grid.σ′[N,j,i]=σT
+
+                end
+            end
         end
         #Finish, update all integrals
-        @. grid.v+=grid.v′*grid.dt
-        @. grid.σ+=grid.σ′*grid.dt
+        grid.v .+= grid.v′ .* grid.dt
+        grid.σ .+= grid.σ′ .* grid.dt
 
     end
 
