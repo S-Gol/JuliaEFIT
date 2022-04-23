@@ -1,7 +1,8 @@
 using Revise
 using Plots
 using ProfileView
-
+using Traceur
+using BenchmarkTools
 
 include("EFITModule/EFIT.jl")
 nThreads = Threads.nthreads()
@@ -16,13 +17,14 @@ grid.v[50,50,50,1]=0.001
 Main.EFIT.IsoStep!(grid)
 function profile()
 
-    for i in 1:10
+    for i in 1:50
         println(i)
         Main.EFIT.IsoStep!(grid);
     end
 end
 #@time profile()
-@ProfileView.profview profile()   
-
+#@ProfileView.profview profile()   
+@trace Main.EFIT.velDeriv!(grid,CartesianIndex(5,5,5))
+#@benchmark Main.EFIT.IsoStep!(grid)
 
 

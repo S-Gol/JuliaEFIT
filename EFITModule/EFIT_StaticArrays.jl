@@ -1,6 +1,5 @@
 module EFIT
     using LoopVectorization
-    using StaticArrays
     using Unrolled
     export EFITGrid, EFITMaterial, IsoMat, IsoSim
     abstract type EFITMaterial end
@@ -17,11 +16,11 @@ module EFIT
     
     
     mutable struct EFITGrid{T<:EFITMaterial}
-        v::Array{Float32,4}
-        v′::Array{Float32,4}
+        v::Array{NTuple{3,Float32},3}
+        v′::Array{NTuple{3,Float32},3}
 
-        σ::Array{StaticMatrix{3,3,Float32},3}
-        σ′::Array{StaticMatrix{3,3,Float32},3}
+        σ::Array{NTuple{9,Float32},3}
+        σ′::Array{NTuple{9,Float32},3}
 
         matIdx::Array{Int32,3}
         materials::Array{T,1}
@@ -38,17 +37,17 @@ module EFIT
             ySize = size(matGrid)[2]
             zSize = size(matGrid)[3]
 
-            v = zeros(Float32,xSize,ySize,zSize,3)
-            v′ = zeros(Float32,xSize,ySize,zSize,3)
-            σ = Array{StaticMatrix{3,3,Float32},3}(undef,(xSize,ySize,zSize))
-            σ′ = Array{StaticMatrix{3,3,Float32},3}(undef,(xSize,ySize,zSize))
-
-            zeros3x3 = @MMatrix zeros(Float32,3,3)
+            v = Array{NTuple{3,Float32},3}(undef, xSize,ySize,zSize)
+            v′ = Array{NTuple{3,Float32},3}(undef, xSize,ySize,zSize)
+            σ = Array{NTuple{9,Float32},3}(undef, xSize,ySize,zSize)
+            σ′ = Array{NTuple{9,Float32},3}(undef, xSize,ySize,zSize)
+            
             Threads.@threads for N in CartesianIndices((1:xSize,1:ySize,1:zSize))
-                σ[N]=copy(zeros3x3)
-                σ′[N]=copy(zeros3x3)
+                v[N]=(0.0,0.0,0.0)
+                v′[N]=(0.0,0.0,0.0)
+                σ[N]=(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+                σ′[N]=(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
             end
-
             println("Creating grid of size $xSize, $ySize, $zSize")
             println(typeof(σ′))
             new{eltype(materials)}(v,v′,σ,σ′,matGrid,materials,dt,ds,xSize,ySize,zSize)
@@ -74,52 +73,23 @@ module EFIT
      
     """Performs a single timestep on an EFITGrid struct"""
     function IsoStep!(grid::EFITGrid)
+        invds = 1.0 / grid.ds
 
         Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             #Update the velocity derivatives
             #Iterate each direction - x,y,z
-            @inbounds for dir in 1:3
-                sigmaComp::Float32 = 0
-                @inbounds for i in 1:3
-                    #On diagonals, we use a different offset
-                    if i == dir
-                        sigmaComp += grid.σ[N+offsets[i]][dir,i]-grid.σ[N][dir,i]
-                    else
-                        sigmaComp += grid.σ[N][dir,i]-grid.σ[(N-offsets[i])][dir,i]
-                    end
-                end
-                grid.v′[N,dir] = averagedρ(grid, N,dir,offsets)*(1.0/grid.ds)*sigmaComp
-            end            
-            #Update the diagonal stresses
-            λ = grid.materials[grid.matIdx[N]].λ
-            λ2μ = (λ + grid.materials[grid.matIdx[N]].μ*2)
-            @inbounds for dir in 1:3
-                vComp::Float32 = 0
-                @inbounds for i in 1:3
-                    if i == dir
-                        vComp += λ2μ*(grid.v[N,i]-grid.v[N-offsets[i],i])
-                    else
-                        vComp += λ*(grid.v[N,i]-grid.v[N-offsets[i],i])
-                    end
-                end
-                grid.σ′[N][dir,dir]=vComp/grid.ds
-            end   
-            #Update the shear stresses
-            @inbounds for i in 1:3
-                @inbounds for j in (i+1):3
-                    μΔs::Float32 = (1.0/grid.ds) * 4.0/(
-                        1.0/grid.materials[grid.matIdx[N]].μ + 1.0/grid.materials[grid.matIdx[N+offsets[i]]].μ +
-                        1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ + 1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ
-                    )
-                    σT::Float32 = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+grid.v[N+offsets[j],i]-grid.v[N,i])
-                    grid.σ′[N][i,j]=σT
-                    grid.σ′[N][j,i]=σT
-    
-                end
-            end       
+            v0, v1, v2, v3 = grid.σ[N], grid.σ[N-offsets[1]], grid.σ[N-offsets[2]], grid.σ[N-offsets[3]]
+            grid.v′[N] = (averagedρ(grid, N, 1, offsets) * invds *
+                          (grid.σ[N+offsets[1]][1] - v0[1] + v0[2] - v2[2] + v0[3] - v3[3]),
+                          averagedρ(grid, N, 2, offsets) * invds *
+                          (v0[4] - v1[4] + grid.σ[N+offsets[2]][5] - v0[5] + v0[6] - v3[6]),
+                          averagedρ(grid, N, 3, offsets) * invds *
+                          (v0[7] - v1[7] + v0[8] - v2[8] + grid.σ[N+offsets[3]][9] - v0[9]))
+                  
+     
         end
         #Finish, update all integrals
-        copyArrs!(grid)
+ 
 
 
     end

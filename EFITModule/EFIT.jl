@@ -32,7 +32,6 @@ module EFIT
         xSize::Int32
         ySize::Int32
         zSize::Int32
-
         function EFITGrid(matGrid::Array,materials::AbstractArray, dt::Number, ds::Number)
             xSize = size(matGrid)[1]
             ySize = size(matGrid)[2]
@@ -65,25 +64,26 @@ module EFIT
     end
 
     const offsets = [CartesianIndex(1,0,0),CartesianIndex(0,1,0),CartesianIndex(0,0,1)]
-    
+    function velDeriv!(grid::EFITGrid,N::CartesianIndex)
+        @inbounds for dir in 1:3
+            sigmaComp::Float32 = 0
+            @inbounds for i in 1:3
+                #On diagonals, we use a different offset
+                if i == dir
+                    sigmaComp += grid.σ[(N+offsets[i]),dir,i]-grid.σ[N,dir,i]
+                else
+                    sigmaComp += grid.σ[N,dir,i]-grid.σ[(N-offsets[i]),dir,i]
+                end
+            end
+            grid.v′[N,dir] = averagedρ(grid, N,dir,offsets)*(1.0/grid.ds)*sigmaComp
+        end      
+    end
     """Performs a single timestep on an EFITGrid struct"""
     function IsoStep!(grid::EFITGrid)
-
         Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             #Update the velocity derivatives
             #Iterate each direction - x,y,z
-            @inbounds for dir in 1:3
-                sigmaComp::Float32 = 0
-                @inbounds for i in 1:3
-                    #On diagonals, we use a different offset
-                    if i == dir
-                        sigmaComp += grid.σ[(N+offsets[i]),dir,i]-grid.σ[N,dir,i]
-                    else
-                        sigmaComp += grid.σ[N,dir,i]-grid.σ[(N-offsets[i]),dir,i]
-                    end
-                end
-                grid.v′[N,dir] = averagedρ(grid, N,dir,offsets)*(1.0/grid.ds)*sigmaComp
-            end            
+            velDeriv!(grid,N)
             #Update the diagonal stresses
             λ = grid.materials[grid.matIdx[N]].λ
             λ2μ = (λ + grid.materials[grid.matIdx[N]].μ*2)
