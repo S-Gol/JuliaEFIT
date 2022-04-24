@@ -29,12 +29,12 @@ const sx=50
 const sy=50
 const sz=50
 
-anim = @animate for n = 1:1000
+anim = @animate for n = 1:500
     println(n)
     Main.EFIT.IsoStep!(grid)
 
     grid.v[sx,sy,sz,:]+=source(grid.dt*float(n),0)
-    Plots.heatmap(abs.(grid.v[:,:,50,3]), clim=(0,0.01))
+    Plots.heatmap(abs.(grid.v[:,:,50,3]), clim=(0,0.005))
 end
     
 gif(anim, "heatmap.gif", fps = 60)

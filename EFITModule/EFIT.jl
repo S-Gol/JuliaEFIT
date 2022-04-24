@@ -18,10 +18,8 @@ module EFIT
     
     struct EFITGrid{T<:EFITMaterial}
         v::Array{Float32,4}
-        v′::Array{Float32,4}
 
         σ::Array{Float32,5}
-        σ′::Array{Float32,5}
 
         matIdx::Array{Int32,3}
         materials::Array{T,1}
@@ -38,12 +36,10 @@ module EFIT
             zSize = size(matGrid)[3]
 
             v = zeros(Float32,xSize,ySize,zSize,3)
-            v′ = zeros(Float32,xSize,ySize,zSize,3)
             σ = zeros(Float32,xSize,ySize,zSize,3,3)
-            σ′ = zeros(Float32,xSize,ySize,zSize,3,3)
 
             println("Creating grid of size $xSize, $ySize, $zSize")
-            new{eltype(materials)}(v,v′,σ,σ′,matGrid,materials,dt,ds,xSize,ySize,zSize)
+            new{eltype(materials)}(v,σ,matGrid,materials,dt,ds,xSize,ySize,zSize)
         end
     end 
 
@@ -51,15 +47,6 @@ module EFIT
     function averagedρ(grid::EFITGrid, I::CartesianIndex,dir::Int64,offsets::Vector{CartesianIndex{3}})::Float32 
         ρavg::Float32 = (2.0 / ((grid.materials[grid.matIdx[I]]).ρ+(grid.materials[grid.matIdx[I+offsets[dir]]]).ρ))
         return ρavg
-    end
-    function copyArrs!(grid)
-        Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
-            for i in 1:3
-                for j in 1:3
-                    grid.σ[N,i,j] += grid.σ′[N,i,j] * grid.dt
-                end
-            end
-        end
     end
 
     const offsets = [CartesianIndex(1,0,0),CartesianIndex(0,1,0),CartesianIndex(0,0,1)]
@@ -108,9 +95,8 @@ module EFIT
                         (1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ) + (1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ)
                     )
                     σT::Float32 = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+(grid.v[N+offsets[j],i]-grid.v[N,i]))
-                    grid.σ[N,i,j]+=grid.dt*σT
-                    grid.σ[N,j,i]+=grid.dt*σT
-    
+                    grid.σ[N,i,j]+=grid.dt*σT    
+                    grid.σ[N,j,i]=grid.σ[N,i,j]
                 end
             end       
         end
