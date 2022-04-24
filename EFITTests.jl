@@ -11,7 +11,7 @@ println("n threads: $nThreads")
 materials = [Main.EFIT.IsoMat(3300.0, 1905.0, 2800.0)]
 
 matGrid = ones(Int32, 100, 100, 100);
-grid = Main.EFIT.EFITGrid(matGrid,materials,0.0001,10);
+grid = Main.EFIT.EFITGrid(matGrid,materials,0.001,10);
 
 println(materials[1])
 println(grid.dt)
@@ -37,7 +37,7 @@ anim = @animate for n = 1:1000
     Plots.heatmap(abs.(grid.v[:,:,50,3]), clim=(0,0.01))
 end
     
-gif(anim, "heatmap.gif", fps = 30)
+gif(anim, "heatmap.gif", fps = 60)
     
 
 

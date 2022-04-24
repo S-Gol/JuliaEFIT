@@ -55,7 +55,6 @@ module EFIT
     function copyArrs!(grid)
         Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             for i in 1:3
-                grid.v[N,i] += grid.v′[N,i] * grid.dt
                 for j in 1:3
                     grid.σ[N,i,j] += grid.σ′[N,i,j] * grid.dt
                 end
@@ -84,6 +83,14 @@ module EFIT
             #Update the velocity derivatives
             #Iterate each direction - x,y,z
             velDeriv!(grid,N)
+        end
+        #copy the velocity Array
+        Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
+            for i in 1:3
+                grid.v[N,i] += grid.v′[N,i] * grid.dt
+            end
+        end
+        Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             #Update the diagonal stresses
             λ = grid.materials[grid.matIdx[N]].λ
             λ2μ = (λ + grid.materials[grid.matIdx[N]].μ*2)
@@ -106,7 +113,7 @@ module EFIT
                         (1.0/grid.materials[grid.matIdx[N]].μ) + (1.0/grid.materials[grid.matIdx[N+offsets[i]]].μ) +
                         (1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ) + (1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ)
                     )
-                    σT::Float32 = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+grid.v[N+offsets[j],i]-grid.v[N,i])
+                    σT::Float32 = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+(grid.v[N+offsets[j],i]-grid.v[N,i]))
                     grid.σ′[N,i,j]=σT
                     grid.σ′[N,j,i]=σT
     

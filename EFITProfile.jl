@@ -15,14 +15,9 @@ matGrid = ones(Int32, 100, 100, 100);
 grid = Main.EFIT.EFITGrid(matGrid,materials,0.00001,1);
 Main.EFIT.IsoStep!(grid)
 
-#Frequency, hz
-const f0=10
-#Period
-const t0 = 1.00 / f0
 
 
 function profile()
-    t=0
     for i in 1:50
         println(i)
         Main.EFIT.IsoStep!(grid);
