@@ -74,7 +74,7 @@ module EFIT
                     sigmaComp += grid.σ[N,dir,i]-grid.σ[(N-offsets[i]),dir,i]
                 end
             end
-            grid.v′[N,dir] = averagedρ(grid, N,dir,offsets)*(1.0/grid.ds)*sigmaComp
+            grid.v[N,dir] += averagedρ(grid, N,dir,offsets)*(1.0/grid.ds)*sigmaComp*grid.dt
         end      
     end
     """Performs a single timestep on an EFITGrid struct"""
@@ -83,12 +83,6 @@ module EFIT
             #Update the velocity derivatives
             #Iterate each direction - x,y,z
             velDeriv!(grid,N)
-        end
-        #copy the velocity Array
-        Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
-            for i in 1:3
-                grid.v[N,i] += grid.v′[N,i] * grid.dt
-            end
         end
         Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             #Update the diagonal stresses
@@ -103,7 +97,7 @@ module EFIT
                         @views vComp += λ*(grid.v[N,i]-grid.v[N-offsets[i],i])
                     end
                 end
-                grid.σ′[N,dir,dir]=vComp/grid.ds
+                grid.σ[N,dir,dir]+=grid.dt*vComp/grid.ds
             end   
             
             #Update the shear stresses
@@ -114,14 +108,13 @@ module EFIT
                         (1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ) + (1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ)
                     )
                     σT::Float32 = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+(grid.v[N+offsets[j],i]-grid.v[N,i]))
-                    grid.σ′[N,i,j]=σT
-                    grid.σ′[N,j,i]=σT
+                    grid.σ[N,i,j]+=grid.dt*σT
+                    grid.σ[N,j,i]+=grid.dt*σT
     
                 end
             end       
         end
-        #Finish, update all integrals
-        copyArrs!(grid)
+
 
 
     end
