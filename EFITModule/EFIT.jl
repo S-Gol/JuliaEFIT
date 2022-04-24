@@ -9,7 +9,7 @@ module EFIT
         λ::Float32
         μ::Float32
         function IsoMat(cl::Number, cs::Number, ρ::Number)
-            λ=ρ*(cl^2+cs^2)
+            λ=ρ*(cl^2-2*cs^2)
             μ=ρ*cs^2
             new(ρ,λ,μ)
         end
@@ -91,19 +91,20 @@ module EFIT
                 vComp::Float32 = 0
                 @inbounds for i in 1:3
                     if i == dir
-                        vComp += λ2μ*(grid.v[N,i]-grid.v[N-offsets[i],i])
+                        @views vComp += λ2μ*(grid.v[N,i]-grid.v[N-offsets[i],i])
                     else
-                        vComp += λ*(grid.v[N,i]-grid.v[N-offsets[i],i])
+                        @views vComp += λ*(grid.v[N,i]-grid.v[N-offsets[i],i])
                     end
                 end
                 grid.σ′[N,dir,dir]=vComp/grid.ds
             end   
+            
             #Update the shear stresses
             @inbounds for i in 1:3
                 @inbounds for j in (i+1):3
                     μΔs::Float32 = (1.0/grid.ds) * 4.0/(
-                        1.0/grid.materials[grid.matIdx[N]].μ + 1.0/grid.materials[grid.matIdx[N+offsets[i]]].μ +
-                        1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ + 1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ
+                        (1.0/grid.materials[grid.matIdx[N]].μ) + (1.0/grid.materials[grid.matIdx[N+offsets[i]]].μ) +
+                        (1.0/grid.materials[grid.matIdx[N+offsets[j]]].μ) + (1.0/grid.materials[grid.matIdx[N+offsets[i]+offsets[j]]].μ)
                     )
                     σT::Float32 = μΔs * ((grid.v[N+offsets[i],j]-grid.v[N,j])+grid.v[N+offsets[j],i]-grid.v[N,i])
                     grid.σ′[N,i,j]=σT

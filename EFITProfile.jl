@@ -13,18 +13,25 @@ materials = [Main.EFIT.IsoMat(3300.0, 1905.0, 2800.0)]
 
 matGrid = ones(Int32, 100, 100, 100);
 grid = Main.EFIT.EFITGrid(matGrid,materials,0.00001,1);
-grid.v[50,50,50,1]=0.001
 Main.EFIT.IsoStep!(grid)
-function profile()
 
+#Frequency, hz
+const f0=10
+#Period
+const t0 = 1.00 / f0
+
+
+function profile()
+    t=0
     for i in 1:50
         println(i)
         Main.EFIT.IsoStep!(grid);
+
     end
 end
 #@time profile()
 #@ProfileView.profview profile()   
-@trace Main.EFIT.velDeriv!(grid,CartesianIndex(5,5,5))
-#@benchmark Main.EFIT.IsoStep!(grid)
+#trace Main.EFIT.velDeriv!(grid,CartesianIndex(5,5,5))
+@benchmark Main.EFIT.IsoStep!(grid)
 
 
