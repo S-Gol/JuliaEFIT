@@ -1,6 +1,6 @@
 module EFIT
     using LoopVectorization
-    using StaticArrays
+    
 
     export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats
     abstract type EFITMaterial end
