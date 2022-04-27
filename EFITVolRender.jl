@@ -14,15 +14,22 @@ materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMat(1,0,1)]
 
 matGrid = ones(Int32, 100, 100, 100);
 matGrid[40:60,40:60,40:50].=2
-grid = Main.EFIT.EFITGrid(matGrid,materials,0.0019,20);
 
-println(materials[1])
-println(grid.dt)
-println(grid.ds)
 #Frequency, hz
-f0=30
+f0=1e6
 #Period
 t0 = 1.00 / f0
+
+c=6000
+dx = c/(10*f0)
+dt = dx / (c*sqrt(3))
+
+grid = Main.EFIT.EFITGrid(matGrid,materials,dt,dx);
+
+println(materials[1])
+println("dT: $dt")
+println("dX: $ds")
+
 
 function source(t, nt)
     v = exp(-((2*(t-2*t0)/(t0))^2))*sin(2*pi*f0*t)*0.1
