@@ -30,6 +30,8 @@ module EFIT
         xSize::Int32
         ySize::Int32
         zSize::Int32
+
+        BCWeights::Array{Float32,3}
         function EFITGrid(matGrid::Array,materials::AbstractArray, dt::Number, ds::Number)
             xSize = size(matGrid)[1]
             ySize = size(matGrid)[2]
@@ -37,9 +39,10 @@ module EFIT
 
             v = zeros(Float32,xSize,ySize,zSize,3)
             σ = zeros(Float32,xSize,ySize,zSize,3,3)
+            BCWeights = ones(Float32,xSize,ySize,zSize)
 
             println("Creating grid of size $xSize, $ySize, $zSize")
-            new{eltype(materials)}(v,σ,matGrid,materials,dt,ds,xSize,ySize,zSize)
+            new{eltype(materials)}(v,σ,matGrid,materials,dt,ds,xSize,ySize,zSize,BCWeights)
         end
     end 
 
@@ -62,6 +65,7 @@ module EFIT
                 end
             end
             grid.v[N,dir] += averagedρ(grid, N,dir,offsets)*(1.0/grid.ds)*sigmaComp*grid.dt
+            grid.v[N,dir] *= grid.BCWeights[N]
         end      
     end
     """Performs a single timestep on an EFITGrid struct"""

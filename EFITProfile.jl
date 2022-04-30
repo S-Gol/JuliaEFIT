@@ -20,13 +20,13 @@ Main.EFIT.IsoStep!(grid)
 function profile()
     for i in 1:50
         println(i)
-        Main.EFIT.IsoStep!(grid);
-
+        Main.EFIT.IsoStep!(grid)
     end
 end
-#@time profile()
+@time Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
+#@time Main.EFIT.IsoStep!(grid)
 #@ProfileView.profview profile()   
-#trace Main.EFIT.velDeriv!(grid,CartesianIndex(5,5,5))
-@benchmark Main.EFIT.IsoStep!(grid)
+#trace Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
+#@benchmark Main.EFIT.IsoStep!(grid)
 
 

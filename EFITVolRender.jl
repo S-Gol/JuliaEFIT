@@ -13,20 +13,36 @@ println("n threads: $nThreads")
 materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMat(1,0,1)]
 
 matGrid = ones(Int32, 100, 100, 100);
-matGrid[40:60,40:60,40:50].=2
+#matGrid[40:60,40:60,40:50].=2
 grid = Main.EFIT.EFITGrid(matGrid,materials,0.0019,20);
 
+nLayers = float(10)
+for x = 1:floor(Int,nLayers)
+    for y = 1:floor(Int,nLayers)
+        weight = min(exp(-0.015*(x)),exp(-0.015*(y)))
+
+        #+- X directions
+        grid.BCWeights[x,:,:] .= weight
+        grid.BCWeights[100-x,:,:] .= weight
+
+        #+- z directions
+        grid.BCWeights[:,y,:] .= weight
+        grid.BCWeights[:,100-y,:] .= weight
+    end
+
+end
 println(materials[1])
 println(grid.dt)
 println(grid.ds)
+
 #Frequency, hz
 f0=30
 #Period
 t0 = 1.00 / f0
 
-function source(t, nt)
+function source(t)
     v = exp(-((2*(t-2*t0)/(t0))^2))*sin(2*pi*f0*t)*0.1
-    return [v,v,0]
+    return [0,0,v]
 end
 const sx=50
 const sy=50
@@ -42,7 +58,7 @@ fig,ax,plt = volume(grid.v[:,:,:,1],algorithm=:mip,colorrange = (0, 0.005),color
 function stepSim(t)
     println(t)
 
-    grid.v[sx,sy,sz,:]+=source(t,0)
+    grid.v[sx,sy,sz,:]+=source(t)
     Main.EFIT.IsoStep!(grid)
     plt.volume = sqrt.(grid.v[:,:,:,1].^2 .+ grid.v[:,:,:,2].^2 .+ grid.v[:,:,:,3].^2)
 end
