@@ -1,5 +1,4 @@
 using Revise
-using Plots
 using ProfileView
 using Traceur
 using BenchmarkTools
@@ -23,10 +22,10 @@ function profile()
         Main.EFIT.IsoStep!(grid)
     end
 end
-@time Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
+#@time Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
 #@time Main.EFIT.IsoStep!(grid)
 #@ProfileView.profview profile()   
 #trace Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
-#@benchmark Main.EFIT.IsoStep!(grid)
+@benchmark Main.EFIT.IsoStep!(grid)
 
 
