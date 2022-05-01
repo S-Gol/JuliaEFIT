@@ -3,6 +3,8 @@ using GLMakie
 using Colors
 using ParallelStencil
 using ParallelStencil.FiniteDifferences3D
+using NPZ
+
 
 ParallelStencil.@reset_parallel_stencil()
 USE_GPU = false
@@ -19,7 +21,9 @@ println("n threads: $nThreads")
 
 
 #Material declarations
-materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMats["lightweightGeneric"]]
+matGrid = npzread("MeshFiles/Rail.npy")[:,5:end,1:340].+1
+
+materials = [Main.EFIT.IsoMats["lightweightGeneric"],Main.EFIT.IsoMats["steel"]]
 
 c = 8000
 #Frequency, hz
@@ -30,8 +34,7 @@ t0 = 1.00 / f0
 dx = c/(8*f0)
 dt = dx/(c*sqrt(3))
 
-matGrid = ones(Int32, 100, 100, 100);
-matGrid[40:60,40:60,40:50].=2
+
 grid = Main.EFIT.EFITGrid(matGrid,materials,dt,dx);
 
 
