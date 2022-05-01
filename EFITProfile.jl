@@ -3,8 +3,7 @@ using ProfileView
 using Traceur
 using BenchmarkTools
 
-#include("EFITModule/EFIT.jl")
-include("EFITModule/EFITParallelStencils.jl")
+include("EFITModule/EFIT.jl")
 
 nThreads = Threads.nthreads()
 println("n threads: $nThreads")

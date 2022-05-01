@@ -12,7 +12,7 @@ else
 end
 
 
-include("EFITModule/EFITParallelStencils.jl")
+include("EFITModule/EFIT.jl")
 nThreads = Threads.nthreads()
 println("n threads: $nThreads")
 
