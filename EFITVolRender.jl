@@ -21,30 +21,10 @@ println("n threads: $nThreads")
 materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMat(1,0,1)]
 
 matGrid = ones(Int32, 100, 100, 100);
-#matGrid[40:60,40:60,40:50].=2
-grid = Main.EFIT.EFITGrid(matGrid,materials,0.0019,20);
-
-nLayers = float(10)
-for x = 1:floor(Int,nLayers)
-    for y = 1:floor(Int,nLayers)
-        weight = min(exp(-0.015*(x)),exp(-0.015*(y)))
-
-        #+- X directions
-        grid.BCWeights[x,:,:] .= weight
-        grid.BCWeights[100-x,:,:] .= weight
-
-        #+- z directions
-        grid.BCWeights[:,y,:] .= weight
-        grid.BCWeights[:,100-y,:] .= weight
-    end
-
-end
-println(materials[1])
-println(grid.dt)
-println(grid.ds)
+matGrid[40:60,40:60,40:50].=2
 
 #Frequency, hz
-f0=30
+f0=1e6
 #Period
 t0 = 1.00 / f0
 
