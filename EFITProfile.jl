@@ -3,7 +3,9 @@ using ProfileView
 using Traceur
 using BenchmarkTools
 
-include("EFITModule/EFIT.jl")
+#include("EFITModule/EFIT.jl")
+include("EFITModule/EFITParallelStencils.jl")
+
 nThreads = Threads.nthreads()
 println("n threads: $nThreads")
 
@@ -22,10 +24,22 @@ function profile()
         Main.EFIT.IsoStep!(grid)
     end
 end
+function threadedVel()
+    Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
+        Main.EFIT.velUpdate!(grid,N)
+    end
+end
 #@time Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
 #@time Main.EFIT.IsoStep!(grid)
 #@ProfileView.profview profile()   
 #trace Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
+
+#@benchmark Main.EFIT.IsoStep!(grid)
+
+#println("Old velocity benchmark: ")
+#@benchmark threadedVel()
+
+#println("ParallelStencil benchmark: ")
+
 @benchmark Main.EFIT.IsoStep!(grid)
-
-
+#Main.EFIT.IsoStep!(grid)

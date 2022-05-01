@@ -1,8 +1,8 @@
 module EFIT
     using LoopVectorization
-    using StaticArrays
     include("EFITMaterial.jl")
     export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats
+
 
     struct EFITGrid{T<:EFITMaterial}
         v::Array{Float32,4}
@@ -14,6 +14,7 @@ module EFIT
 
         dt::Float32
         ds::Float32
+        dtds::Float32
 
         xSize::Int32
         ySize::Int32
@@ -30,7 +31,7 @@ module EFIT
             BCWeights = ones(Float32,xSize,ySize,zSize)
 
             println("Creating grid of size $xSize, $ySize, $zSize")
-            new{eltype(materials)}(v,σ,matGrid,materials,dt,ds,xSize,ySize,zSize,BCWeights)
+            new{eltype(materials)}(v,σ,matGrid,materials,dt,ds,dt/ds,xSize,ySize,zSize,BCWeights)
         end
     end 
 
@@ -41,6 +42,7 @@ module EFIT
     end
 
     const offsets = [CartesianIndex(1,0,0),CartesianIndex(0,1,0),CartesianIndex(0,0,1)]
+    
     function velUpdate!(grid::EFITGrid,N::CartesianIndex)
         #Update the velocity derivatives
         #Iterate each direction - x,y,z
@@ -59,6 +61,7 @@ module EFIT
             grid.v[N,dir] *= grid.BCWeights[N]
         end      
     end
+
     function isoStressUpdate!(grid::EFITGrid,N::CartesianIndex)
         #Update the diagonal stresses
         λ = grid.materials[grid.matIdx[N]].λ
@@ -93,6 +96,7 @@ module EFIT
         Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             velUpdate!(grid,N)
         end
+        
         Threads.@threads for N in CartesianIndices((2:grid.xSize-1,2:grid.ySize-1,2:grid.zSize-1))
             isoStressUpdate!(grid,N)
         end
