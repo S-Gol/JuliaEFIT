@@ -95,7 +95,7 @@ module EFIT
     const offsets = [CartesianIndex(1,0,0),CartesianIndex(0,1,0),CartesianIndex(0,0,1)]
     
     """Performs a single timestep on an EFITGrid struct"""
-    function IsoStep!(grid::EFITGrid)
+    function IsoStep!(grid::EFITGrid{IsoMat})
         @parallel (2:grid.xSize-1, 2:grid.ySize-1, 2:grid.zSize-1) computeV!(
         grid.vx,grid.vy,grid.vz, 
         grid.σxx,grid.σyy,grid.σzz,grid.σxy,grid.σxz,grid.σyz,
@@ -133,6 +133,13 @@ module EFIT
         σxz[x,y,z] = σxz[x,y,z] + dtds * (vx[x,y,z+1] - vx[x,y,z] + vz[x+1,y,z]-vz[x,y,z]) * 4/(1/μ[x,y,z]+1/μ[x+1,y,z]+1/μ[x,y,z+1]+1/μ[x+1,y,z+1])
         σyz[x,y,z] = σyz[x,y,z] + dtds * (vy[x,y,z+1] - vy[x,y,z] + vz[x,y+1,z]-vz[x,y,z]) * 4/(1/μ[x,y,z]+1/μ[x,y+1,z]+1/μ[x,y,z+1]+1/μ[x,y+1,z+1])
 
+        return
+    end
+    @parallel_indices (x,y,z) function applySource!(vx::Data.Array,vy::Data.Array,vz::Data.Array, 
+    sx::Data.Number,sy::Data.Number,sz::Data.Number)
+        vx[x,y,z]+=sx
+        vy[x,y,z]+=sy
+        vz[x,y,z]+=sz
         return
     end
 end
