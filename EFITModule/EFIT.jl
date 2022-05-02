@@ -1,5 +1,6 @@
 module EFIT
     using LoopVectorization
+    
     include("EFITMaterial.jl")
     export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats
 
@@ -42,6 +43,10 @@ module EFIT
         μ
         λ2μ
 
+        matIDX
+        materials
+        
+
         function EFITGrid(matGrid::Array,materials::AbstractArray, dt::Number, ds::Number)
             xSize = size(matGrid)[1]
             ySize = size(matGrid)[2]
@@ -82,18 +87,11 @@ module EFIT
             println("Creating grid of size $xSize, $ySize, $zSize")
             new{eltype(materials)}(vx,vy,vz,σxx,σyy,σzz,σxy,σxz,σyz,
             dt,ds,dt/ds,xSize,ySize,zSize,BCWeights,
-            Data.Array(ρ),Data.Array(λ),Data.Array(μ),Data.Array(λ2μ))
+            Data.Array(ρ),Data.Array(λ),Data.Array(μ),Data.Array(λ2μ),
+            matGrid, materials)
         end
     end 
 
-    """Averages ρ across the given direction"""
-    function averagedρ(grid::EFITGrid, I::CartesianIndex,dir::Int64,offsets::Vector{CartesianIndex{3}})::Float32 
-        ρavg::Float32 = (2.0 / ((grid.materials[grid.matIdx[I]]).ρ+(grid.materials[grid.matIdx[I+offsets[dir]]]).ρ))
-        return ρavg
-    end
-
-    const offsets = [CartesianIndex(1,0,0),CartesianIndex(0,1,0),CartesianIndex(0,0,1)]
-    
     """Performs a single timestep on an EFITGrid struct"""
     function IsoStep!(grid::EFITGrid{IsoMat})
         @parallel (2:grid.xSize-1, 2:grid.ySize-1, 2:grid.zSize-1) computeV!(
@@ -114,8 +112,8 @@ module EFIT
     dtds::Data.Number, ρ::Data.Array)
         #Velocities from stresses
         vx[x,y,z] = vx[x,y,z] + dtds*(σxx[x+1,y,z]-σxx[x,y,z] + σxy[x,y,z]-σxy[x,y-1,z] + σxz[x,y,z]-σxz[x,y,z-1]) * 2/(ρ[x,y,z] + ρ[x+1,y,z])
-        vy[x,y,z] = vy[x,y,z] + dtds*(σxy[x,y,z]-σxy[x-1,y,z] + σyy[x,y+1,z]-σyy[x,y,z] + σyz[x,y,z]-σyz[x,y,z-1]) * 2/(ρ[x,y,z] + ρ[x+1,y,z])
-        vz[x,y,z] = vz[x,y,z] + dtds*(σxz[x,y,z]-σxz[x-1,y,z] + σyz[x,y,z]-σyz[x,y-1,z] + σzz[x,y,z+1]-σzz[x,y,z]) * 2/(ρ[x,y,z] + ρ[x+1,y,z])
+        vy[x,y,z] = vy[x,y,z] + dtds*(σxy[x,y,z]-σxy[x-1,y,z] + σyy[x,y+1,z]-σyy[x,y,z] + σyz[x,y,z]-σyz[x,y,z-1]) * 2/(ρ[x,y,z] + ρ[x,y+1,z])
+        vz[x,y,z] = vz[x,y,z] + dtds*(σxz[x,y,z]-σxz[x-1,y,z] + σyz[x,y,z]-σyz[x,y-1,z] + σzz[x,y,z+1]-σzz[x,y,z]) * 2/(ρ[x,y,z] + ρ[x,y,z+1])
 
         return 
     end
