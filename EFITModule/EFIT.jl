@@ -2,7 +2,7 @@ module EFIT
     using LoopVectorization
     
     include("EFITMaterial.jl")
-    export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats
+    export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, writeToBOV
 
     using ParallelStencil
     using ParallelStencil.FiniteDifferences3D
@@ -140,4 +140,33 @@ module EFIT
         vz[x,y,z]+=sz
         return
     end
+
+    function writeToBOV(data, t::Number,nt::Int,grid::EFITGrid; directory::AbstractString="", filePrefix::AbstractString="data")
+        
+        headerName = "$filePrefix-$nt.bov"
+        dataName = "$filePrefix-$nt.bin"
+        nz = grid.xSize
+        ny = grid.ySize
+        nx = grid.zSize
+        #Write the BOV header
+        touch("$directory/$headerName")
+        open("$directory/$headerName", "w") do headerFile
+            println(headerFile, "DATA_FILE: $dataName")
+            println(headerFile, "DATA_SIZE: $nx $ny $nz")
+            println(headerFile, "DATA_FORMAT: FLOAT")
+            println(headerFile, "VARIABLE: Pressure")
+            println(headerFile, "VARIABLE: Pressure")
+            println(headerFile, "DATA_ENDIAN: LITTLE")
+            println(headerFile, "CENTERING: ZONAL")
+            println(headerFile, "BRICK_ORIGIN: 0. 0. 0.")
+            println(headerFile, "BRICK_SIZE: $nx $ny $nz")
+
+        end
+        dataFile = open("$directory/$dataName","w")
+        write(dataFile, data)
+        close(dataFile)
+
+    end
+
+
 end
