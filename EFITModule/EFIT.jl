@@ -149,7 +149,7 @@ module EFIT
         ny = grid.ySize
         nx = grid.zSize
         #Write the BOV header
-        touch("$directory/$headerName")
+        #touch("$directory/$headerName")
         open("$directory/$headerName", "w") do headerFile
             println(headerFile, "DATA_FILE: $dataName")
             println(headerFile, "DATA_SIZE: $nx $ny $nz")
