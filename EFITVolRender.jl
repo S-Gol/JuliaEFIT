@@ -21,11 +21,13 @@ println("n threads: $nThreads")
 
 
 #Material declarations
-matGrid = npzread("MeshFiles/Rail.npy")[:,5:end,1:340].+1
+#matGrid = npzread("MeshFiles/Rail.npy")[:,5:end,1:340].+1
 
-materials = [Main.EFIT.IsoMats["lightweightGeneric"],Main.EFIT.IsoMats["steel"]]
-
-c = 8000
+nx = ny = nz = 100
+matGrid = ones(Int, nx,ny,nz)
+materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMat(1,0,1)]
+matGrid[40:60,40:60,50:60] .=2
+c = 6000
 #Frequency, hz
 f0=1e6
 #Period
@@ -48,7 +50,7 @@ const sy=50
 const sz=98
 
 # animation settings
-nframes = 500
+nframes = 100
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
@@ -56,14 +58,23 @@ fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.005),colorm
 
 println(grid.dtds)
 function stepSim(t)
+
     println(t)
     Main.EFIT.IsoStep!(grid)
-    @parallel (sx:sx+1,sy:sy+1,sz:sz+1) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
-
-    plt.volume = sqrt.(Array(grid.vx).^2 .+ Array(grid.vy).^2 .+ Array(grid.vz).^2)
+    Threads.@threads for x in 30:70
+        for y in 30:70
+            @parallel (x:x,y:y,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
+        end
+    end
+    plt.volume = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
 end
 
+
+
 record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
+velMag = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
+
+@time writeResult = Threads.@spawn Main.EFIT.writeToBOV(velMag, 1.0,100, grid,directory="A://")
 
 
 
