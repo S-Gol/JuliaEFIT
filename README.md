@@ -1,7 +1,7 @@
 # Elastodynamic Finite Integration Technique using Julia
-The Elastodynamic Finite Integration Technique is a numerical solution technique used to simulate elastodynamic waves in solid media. Support arbitrary sources, isotropic material properties, frequency ranges, and physical size. 
+The Elastodynamic Finite Integration Technique is a numerical solution technique used to simulate elastodynamic waves in solid media. This implementation supports arbitrary sources, isotropic material properties, frequency ranges, and physical size. 
 
-![Simulation rendered volumetrically using GLMakie](https://raw.githubusercontent.com/S-Gol/JuliaEFIT/main/ReadmeImages/Volumetric_100.gif)
+![Simulation rendered volumetrically using GLMakie](https://raw.githubusercontent.com/S-Gol/JuliaEFIT/main/ReadmeImages/Volumetric_100.gif?token=GHSAT0AAAAAABTU4U3NDTRKPPK3ANQOLR66YTRSG7Q)
 
 ## Implementation
 
