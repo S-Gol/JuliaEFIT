@@ -15,7 +15,8 @@ end
 #Sample materials
 IsoMats = Dict(
     "steel"=>IsoMat(5960, 3235, 8000),
-    "lightweightGeneric"=>IsoMat(596, 323, 800),
+    "Steel"=>IsoMat(5960, 3235, 8000),
+    "LightweightGeneric"=>IsoMat(596, 323, 800),
     "Aluminum"=>IsoMat(6420, 3040, 2700),
     "Berylium"=>IsoMat(12890, 8880, 1870),
     "Brass"=>IsoMat(4700, 2110, 8600),
