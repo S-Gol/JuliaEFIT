@@ -42,7 +42,7 @@ module EFIT
         materials::Array{T,1}
         
 
-        function EFITGrid(matGrid::Array,materials::AbstractArray, dt::Number, ds::Number)
+        function EFITGrid(matGrid::Array,materials::Array, dt::Number, ds::Number)
             xSize = size(matGrid)[1]
             ySize = size(matGrid)[2]
             zSize = size(matGrid)[3]
@@ -70,7 +70,7 @@ module EFIT
     end 
 
     """Performs a single timestep on an EFITGrid struct"""
-    function IsoStep!(grid::EFITGrid{IsoMat})
+    function SimStep!(grid::EFITGrid{IsoMat})
         @parallel (2:grid.xSize-1, 2:grid.ySize-1, 2:grid.zSize-1) computeV!(
         grid.vx,grid.vy,grid.vz, 
         grid.σxx,grid.σyy,grid.σzz,grid.σxy,grid.σxz,grid.σyz,
