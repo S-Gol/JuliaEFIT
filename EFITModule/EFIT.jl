@@ -153,7 +153,7 @@ module EFIT
         open("$directory/$headerName", "w") do headerFile
             println(headerFile, "TIME: $t")
             println(headerFile, "DATA_FILE: $dataName")
-            println(headerFile, "DATA_SIZE: $nx $ny $nz")
+            println(headerFile, "DATA_SIZE: $nz $ny $nx")
             println(headerFile, "DATA_FORMAT: FLOAT")
             println(headerFile, "VARIABLE: Pressure")
             println(headerFile, "DATA_ENDIAN: LITTLE")
