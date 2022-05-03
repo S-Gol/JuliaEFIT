@@ -50,7 +50,7 @@ const sy=50
 const sz=98
 
 # animation settings
-nframes = 500
+nframes = 50
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
@@ -74,7 +74,7 @@ end
 record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
 velMag = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
 
-#@time writeResult = Threads.@spawn Main.EFIT.writeToBOV(velMag, 1.0,100, grid,directory="A://")
+writeResult = Main.EFIT.writeToBOV(velMag, 1.0,100, grid,directory="A://")
 
 
 

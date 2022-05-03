@@ -137,21 +137,20 @@ module EFIT
         
         headerName = "$filePrefix-$nt.bov"
         dataName = "$filePrefix-$nt.bin"
-        nz = grid.xSize
-        ny = grid.ySize
-        nx = grid.zSize
+        nx = size(data,1)
+        ny = size(data,2)
+        nz = size(data,3)
         #Write the BOV header
-        #touch("$directory/$headerName")
         open("$directory/$headerName", "w") do headerFile
             println(headerFile, "TIME: $t")
             println(headerFile, "DATA_FILE: $dataName")
-            println(headerFile, "DATA_SIZE: $nz $ny $nx")
+            println(headerFile, "DATA_SIZE: $nx $ny $nz")
             println(headerFile, "DATA_FORMAT: FLOAT")
             println(headerFile, "VARIABLE: Pressure")
             println(headerFile, "DATA_ENDIAN: LITTLE")
             println(headerFile, "CENTERING: ZONAL")
             println(headerFile, "BRICK_ORIGIN: 0. 0. 0.")
-            println(headerFile, "BRICK_SIZE: $nz $ny $nx")
+            println(headerFile, "BRICK_SIZE: $nx $ny $nz")
 
         end
         dataFile = open("$directory/$dataName","w")
@@ -159,6 +158,9 @@ module EFIT
         close(dataFile)
 
     end
-
+    function writeToBOV(t::Number,nt::Int,grid::EFITGrid; directory::AbstractString="", filePrefix::AbstractString="data")
+        velMag = Threads.@spawn sqrt.(grid[1:2:end].vx.^2 .+ grid.vy[1:2:end].^2 .+ grid.vz[1:2:end].^2)
+        Threads.@spawn writeToBOV(fetch(velMag),t,nt,grid,directory=directory,filePrefix=filePrefix)
+    end
 
 end
