@@ -72,9 +72,8 @@ end
 
 
 record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
-velMag = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
 
-writeResult = Main.EFIT.writeToBOV(velMag, 1.0,100, grid,directory="A://")
+Threads.@spawn writeResult = Main.EFIT.writeToBOV(1.0,100, grid,directory="A://")
 
 
 

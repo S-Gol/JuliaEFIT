@@ -134,7 +134,6 @@ module EFIT
     end
 
     function writeToBOV(data, t::Number,nt::Int,grid::EFITGrid; directory::AbstractString="", filePrefix::AbstractString="data")
-        
         headerName = "$filePrefix-$nt.bov"
         dataName = "$filePrefix-$nt.bin"
         nx = size(data,1)
@@ -159,8 +158,9 @@ module EFIT
 
     end
     function writeToBOV(t::Number,nt::Int,grid::EFITGrid; directory::AbstractString="", filePrefix::AbstractString="data")
-        velMag = Threads.@spawn sqrt.(grid[1:2:end].vx.^2 .+ grid.vy[1:2:end].^2 .+ grid.vz[1:2:end].^2)
-        Threads.@spawn writeToBOV(fetch(velMag),t,nt,grid,directory=directory,filePrefix=filePrefix)
+        velMag = Threads.@spawn Array(sqrt.(grid.vx[1:2:end, 1:2:end,1:2:end].^2 .+ grid.vy[1:2:end, 1:2:end,1:2:end].^2 .+ grid.vz[1:2:end, 1:2:end,1:2:end].^2))
+        
+        writeToBOV(fetch(velMag),t,nt,grid,directory=directory,filePrefix=filePrefix)
     end
 
 end
