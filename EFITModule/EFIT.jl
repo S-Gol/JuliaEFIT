@@ -151,15 +151,15 @@ module EFIT
         #Write the BOV header
         #touch("$directory/$headerName")
         open("$directory/$headerName", "w") do headerFile
+            println(headerFile, "TIME: $t")
             println(headerFile, "DATA_FILE: $dataName")
             println(headerFile, "DATA_SIZE: $nx $ny $nz")
             println(headerFile, "DATA_FORMAT: FLOAT")
             println(headerFile, "VARIABLE: Pressure")
-            println(headerFile, "VARIABLE: Pressure")
             println(headerFile, "DATA_ENDIAN: LITTLE")
             println(headerFile, "CENTERING: ZONAL")
             println(headerFile, "BRICK_ORIGIN: 0. 0. 0.")
-            println(headerFile, "BRICK_SIZE: $nx $ny $nz")
+            println(headerFile, "BRICK_SIZE: $nz $ny $nx")
 
         end
         dataFile = open("$directory/$dataName","w")
