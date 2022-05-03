@@ -3,10 +3,12 @@ struct IsoMat <: EFITMaterial
     ρ::Float32
     λ::Float32
     μ::Float32
+    λ2μ::Float32
     function IsoMat(cl::Number, cs::Number, ρ::Number)
         λ=ρ*(cl^2-2*cs^2)
         μ=ρ*cs^2
-        new(ρ,λ,μ)
+        λ2μ = λ+2*μ
+        new(ρ,λ,μ,λ2μ)
     end
 end
 

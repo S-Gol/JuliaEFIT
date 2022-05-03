@@ -50,7 +50,7 @@ const sy=50
 const sz=98
 
 # animation settings
-nframes = 100
+nframes = 500
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
@@ -61,8 +61,8 @@ function stepSim(t)
 
     println(t)
     Main.EFIT.IsoStep!(grid)
-    Threads.@threads for x in 30:70
-        for y in 30:70
+    Threads.@threads for x in 40:60
+        for y in 40:60
             @parallel (x:x,y:y,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
         end
     end
@@ -74,7 +74,7 @@ end
 record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
 velMag = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
 
-@time writeResult = Threads.@spawn Main.EFIT.writeToBOV(velMag, 1.0,100, grid,directory="A://")
+#@time writeResult = Threads.@spawn Main.EFIT.writeToBOV(velMag, 1.0,100, grid,directory="A://")
 
 
 
