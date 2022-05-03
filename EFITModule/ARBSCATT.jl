@@ -27,7 +27,7 @@ module ARBSCATT
         @inbounds for (i, c) in enumerate(@view read("$dir/ARBSCATT.file")[2:2:end])
             v[i] = Int(c - 0x30)
         end
-        return (v, paramNames)
+        return (v,paramDict)
     end
     struct Transducer
         z::Int
