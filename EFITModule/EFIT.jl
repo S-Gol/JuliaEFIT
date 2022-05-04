@@ -165,7 +165,7 @@ module EFIT
     function readBOV(path::AbstractString)
         size = (0,0,0)
         dataPath = ""
-        dir = join(split(path,"/")[1:end-1])
+        dir = join(split(path,"/")[1:end-1],"/")
 
         open(path) do bovFile
             for l in readlines(path)
@@ -185,7 +185,7 @@ module EFIT
     function readBOV!(data::AbstractArray, path::AbstractString)
         size = (0,0,0)
         dataPath = ""
-        dir = join(split(path,"/")[1:end-1])
+        dir = join(split(path,"/")[1:end-1],"/")
 
         open(path) do bovFile
             for l in readlines(path)
