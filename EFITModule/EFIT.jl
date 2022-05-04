@@ -162,5 +162,42 @@ module EFIT
         
         writeToBOV(fetch(velMag),t,nt,grid,directory=directory,filePrefix=filePrefix)
     end
+    function readBOV(path::AbstractString)
+        size = (0,0,0)
+        dataPath = ""
+        dir = join(split(path,"/")[1:end-1])
 
+        open(path) do bovFile
+            for l in readlines(path)
+                words = split(l)
+                if words[1] == "DATA_SIZE:"
+                    size = (parse(Int, words[2]), parse(Int, words[3]), parse(Int, words[4]))
+                elseif words[1] == "DATA_FILE:"
+                    dataPath = String(words[2])
+                end
+            end
+        end
+        data = Array{Float32,3}(undef, size[1],size[2],size[3])
+        read!("$dir/$dataPath",data)
+
+        return data
+    end
+    function readBOV!(data::AbstractArray, path::AbstractString)
+        size = (0,0,0)
+        dataPath = ""
+        dir = join(split(path,"/")[1:end-1])
+
+        open(path) do bovFile
+            for l in readlines(path)
+                words = split(l)
+                if words[1] == "DATA_SIZE:"
+                    size = (parse(Int, words[2]), parse(Int, words[3]), parse(Int, words[4]))
+                elseif words[1] == "DATA_FILE:"
+                    dataPath = String(words[2])
+                end
+            end
+        end
+        read!("$dir/$dataPath",data)
+
+    end
 end
