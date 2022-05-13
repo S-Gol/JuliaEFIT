@@ -1,3 +1,5 @@
+using LinearAlgebra
+using StaticArrays
 abstract type EFITMaterial end
 struct IsoMat <: EFITMaterial
     ρ::Float32
@@ -12,6 +14,36 @@ struct IsoMat <: EFITMaterial
     end
 end
 
+struct AnisoMat <: EFITMaterial
+    ρ::Float32
+    c::Symmetric{Float32, Matrix{Float32}}
+    s
+    function AnisoMat(cl::Number, cs::Number, ρ::Number)
+        c = zeros(Float32, 6,6)
+        s = zeros(Float32, 6,6)
+        C44 = ρ*cs^2
+        C11 = ρ*cl^2
+        C12 = ρ*(cl^2-2*cs^2)
+        
+        c[1,1] = c[2,2] = c[3,3] = C11
+        c[4,4] = c[5,5] = c[6,6] = C44
+        c[1,2] = c[1,3] = c[2,3] = C12
+        c = Symmetric(c)
+        s = Symmetric(inv(c))
+        new(ρ,Symmetric(c),s)
+    end
+    function AnisoMat(mat::IsoMat)
+        c = zeros(Float32, 6,6)
+        c[1,1] = c[2,2] = c[3,3] = mat.λ2μ
+        c[4,4] = c[5,5] = c[6,6] = mat.μ
+        c[1,2] = c[1,3] = c[2,3] = mat.λ
+        new(mat.ρ,Symmetric(c))
+    end
+    function AnisoMat(ρ::Number, C::AbstractMatrix)
+        new(ρ,Symmetric(C))
+    end
+
+end
 #Sample materials
 IsoMats = Dict(
     "steel"=>IsoMat(5960, 3235, 8000),
