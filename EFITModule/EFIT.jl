@@ -38,9 +38,9 @@ module EFIT
 
         #BCWeights
 
-        matGrid::Array{Int32, 3}
+        matGrid::Array{Int16, 3}
         materials::Array{T,1}
-        matPermDict::Dict
+        matPermDict::Dict{Int64,Matrix{Float32}}
 
         function EFITGrid(matGrid::Array,materials::Array, dt::Number, ds::Number)
             xSize = size(matGrid)[1]
@@ -60,12 +60,22 @@ module EFIT
             σyz = @zeros(xSize,ySize,zSize)
 
             #=BCWeights = @ones(xSize,ySize,zSize)=#
-
-
+            println("")
             println("Creating grid of size $xSize, $ySize, $zSize")
-            new{eltype(materials)}(vx,vy,vz,σxx,σyy,σzz,σxy,σxz,σyz,
-            dt,ds,dt/ds,xSize,ySize,zSize,#=Data.Array(BCWeights),=#
-            matGrid, materials)
+            println("")
+
+            if eltype(materials) == AnisoMat
+                matDict = Dict{Int64, Matrix{Float32}}()
+                setAveragePerms!(matDict, matGrid, materials)
+
+                new{eltype(materials)}(vx,vy,vz,σxx,σyy,σzz,σxy,σxz,σyz,
+                dt,ds,dt/ds,xSize,ySize,zSize,#=Data.Array(BCWeights),=#
+                matGrid, materials,matDict)
+            else
+                new{eltype(materials)}(vx,vy,vz,σxx,σyy,σzz,σxy,σxz,σyz,
+                dt,ds,dt/ds,xSize,ySize,zSize,#=Data.Array(BCWeights),=#
+                matGrid, materials,undef)
+            end
         end
     end 
 
@@ -100,7 +110,7 @@ module EFIT
     #Velocity calculations - common between isotropic and anisotropic
     @parallel_indices (x,y,z) function computeV!(vx::Data.Array,vy::Data.Array,vz::Data.Array, σxx::Data.Array,
         σyy::Data.Array,σzz::Data.Array,σxy::Data.Array,σxz::Data.Array,σyz::Data.Array,
-        dtds::Data.Number, matGrid::Array{Int32,3}, mats::AbstractArray)
+        dtds::Data.Number, matGrid::Array{Int16,3}, mats::AbstractArray)
         #Velocities from stresses
         ρN = mats[(matGrid[x,y,z])].ρ
         vx[x,y,z] = vx[x,y,z] + dtds*(σxx[x+1,y,z]-σxx[x,y,z] + σxy[x,y,z]-σxy[x,y-1,z] + σxz[x,y,z]-σxz[x,y,z-1]) * 2/(ρN + mats[(matGrid[x+1,y,z])].ρ)
@@ -135,7 +145,7 @@ module EFIT
     #Stress calculations for anisotropic case
     @parallel_indices (x,y,z) function computeσAniso!(vx::Data.Array,vy::Data.Array,vz::Data.Array, σxx::Data.Array,
         σyy::Data.Array,σzz::Data.Array,σxy::Data.Array,σxz::Data.Array,σyz::Data.Array,
-        dtds::Data.Number, matGrid::Array{Int32,3}, mats::AbstractArray)
+        dtds::Data.Number, matGrid::Array{Int16,3}, mats::AbstractArray)
         
         #=From Halkjaer eq 4.7
         R+X
@@ -157,7 +167,6 @@ module EFIT
         dvyy = vy[x,y,z]-vy[x,y-1,z]
         dvzz = vz[x,y,z]-vz[x,y,z-1]
 
-        foo = inv(mats[mID].c)
 
         #Velocity averaging terms for 4.7
         #Terms cancelled per Leckey CNDE expansions
@@ -185,7 +194,7 @@ module EFIT
     #Stress calculations for isostropic case
     @parallel_indices (x,y,z) function computeσIso!(vx::Data.Array,vy::Data.Array,vz::Data.Array, σxx::Data.Array,
         σyy::Data.Array,σzz::Data.Array,σxy::Data.Array,σxz::Data.Array,σyz::Data.Array,
-        dtds::Data.Number, matGrid::Array{Int32,3}, mats::AbstractArray)
+        dtds::Data.Number, matGrid::Array{Int16,3}, mats::AbstractArray)
         
         μN = mats[(matGrid[x,y,z])].μ
         λN = mats[(matGrid[x,y,z])].λ
@@ -286,4 +295,72 @@ module EFIT
         read!("$dir/$dataPath",data)
 
     end
+
+    #Helper function for index has
+    function sortFour(a,b,c,d)
+        if a < b
+            low1 = a
+            high1 = b
+        else 
+            low1 = b
+            high1 = a
+        end
+        if c < d
+            low2 = c
+            high2 = d
+        else
+            low2 = d
+            high2 = c
+        end
+        if low1 < low2
+            lowest = low1
+            middle1 = low2
+        else
+            lowest = low2
+            middle1 = low1
+        end
+        if high1 > high2
+            highest = high1
+            middle2 = high2
+        else
+            highest = high2
+            middle2 = high1
+        end
+        if middle1 < middle2
+            return (lowest,middle1,middle2,highest)
+        else
+            return (lowest,middle2,middle1,highest)
+        end
+    end
+    #Hash the material ids to get a dict key
+    function hashIDX(a,b,c,d)
+        newIDs = sortFour(a,b,c,d)
+        return Int64(newIDs[1]) + Int64(newIDs[2]) << 16 + Int64(newIDs[3]) << 32 + Int64(newIDs[4]) << 48
+    end
+
+
+    const offsets = [(CartesianIndex(1,0,0),CartesianIndex(0,1,0)),(CartesianIndex(0,1,0),CartesianIndex(0,0,1)),(CartesianIndex(1,0,0),CartesianIndex(0,0,1))]
+    function setAveragePerms!(dict::Dict{Int64,Matrix{Float32}}, matIDs::Array{Int16,3}, mats::Array{AnisoMat,1})
+        xSize,ySize,zSize = size(matIDs)
+
+        for N in CartesianIndices((2:xSize-1,2:ySize-1,2:zSize-1))
+            for d in offsets
+                a = matIDs[N]
+                b = matIDs[N+d[1]]
+                c = matIDs[N+d[2]]
+                d = matIDs[N+d[1]+d[2]]
+                id = hashIDX(a,b,c,d)
+                if !haskey(dict, id)
+                    dict[id] = inv(inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4
+                end
+            end
+        end
+        n = length(dict)
+        println("")
+        println("Initialized averaging dict, hashed $n material combinations")
+        println("")
+
+        display(dict)
+    end
+
 end

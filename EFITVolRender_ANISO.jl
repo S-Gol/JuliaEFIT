@@ -20,13 +20,12 @@ end
 
 #Create a grid of integer material indices 
 nx = ny = nz = 100
-matGrid = ones(Int, nx,ny,nz)
+matGrid = ones(Int16, nx,ny,nz)
 #Create the array of materials to be used 
 #Use anisotropic stiffness matrices for isotropic materials 
 materials = [Main.EFIT.AnisoMat(Main.EFIT.IsoMats["steel"]),
-Main.EFIT.AnisoMat(Main.EFIT.IsoMat(1,0,1))]
+Main.EFIT.AnisoMat(Main.EFIT.IsoMat(10,5,1))]
 
-display(materials[1].c)
 #Add a section of the second reflector in the middle
 matGrid[40:60,40:60,50:60] .=2
 #Maximum sound speed in the model
@@ -76,10 +75,10 @@ end
 
 
 
-record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
+#record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
 
 #Store the result as a brick of values file for LLNL VisIT
-writeResult = Main.EFIT.writeToBOV(1.0,100, grid,directory="A://")
+#writeResult = Main.EFIT.writeToBOV(1.0,100, grid,directory="A://")
 
 
 

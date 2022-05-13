@@ -11,7 +11,7 @@ println("n threads: $nThreads")
 #Material declarationsj
 materials = [Main.EFIT.AnisoMat(3300.0, 1905.0, 2800.0)]
 
-matGrid = ones(Int32, 100, 100, 100);
+matGrid = ones(Int16, 100, 100, 100);
 grid = Main.EFIT.EFITGrid(matGrid,materials,0.00001,1);
 Main.EFIT.SimStep!(grid)
 
