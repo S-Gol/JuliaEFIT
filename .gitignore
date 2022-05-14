@@ -6,3 +6,4 @@ heatmap.gif
 *.file
 *.npz
 /BOVTests
+misc.jl
