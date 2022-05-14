@@ -22,7 +22,7 @@ end
 nx = ny = nz = 100
 matGrid = ones(Int, nx,ny,nz)
 #Create the array of materials to be used 
-materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMat(1,0,1)]
+materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMats["steel"]]
 #Add a section of the second reflector in the middle
 matGrid[40:60,40:60,50:60] .=2
 #Maximum sound speed in the model
@@ -57,7 +57,10 @@ framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
 fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.01),colormap=:curl, transparency=true)
+for i in grid.matPermDict
 
+    display(i)
+end
 #Step the simulation
 function stepSim(t)
     println(t)

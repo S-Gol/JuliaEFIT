@@ -74,7 +74,7 @@ module EFIT
             else
                 new{eltype(materials)}(vx,vy,vz,σxx,σyy,σzz,σxy,σxz,σyz,
                 dt,ds,dt/ds,xSize,ySize,zSize,#=Data.Array(BCWeights),=#
-                matGrid, materials,undef)
+                matGrid, materials,Dict{Int64, Matrix{Float32}}())
             end
         end
     end 
@@ -102,7 +102,7 @@ module EFIT
         @parallel (2:grid.xSize-1, 2:grid.ySize-1, 2:grid.zSize-1) computeσAniso!(
         grid.vx,grid.vy,grid.vz, 
         grid.σxx,grid.σyy,grid.σzz,grid.σxy,grid.σxz,grid.σyz,
-        grid.dtds,grid.matGrid,grid.materials
+        grid.dtds,grid.matGrid,grid.materials,grid.matPermDict
         )
 
     end
@@ -133,19 +133,19 @@ module EFIT
         return A[x,y,z] + A[x+i1,y+j1,z+k1] + A[x+i2,y+j2,z+k2] + A[x+i1+i2,y+j1+j2,z+k1+k2]  
     end
 
-
-    function dav(A::Data.Array,x,::Integer, y::Integer, z::Integer, dir1::Integer, dir2::Integer, face::Integer)
-        return av(A,x,y,z, dir1, dir2) - av(A,x-face==1,y-face==2,z-face==3,dir1,dir2)
-    end
     
-    const R = 1
-    const F = 2 
-    const U = 3
+    const R = 1::Integer
+    const F = 2::Integer
+    const U = 3::Integer
+
+    function dav(A::Data.Array,x::Integer, y::Integer, z::Integer, dir1::Integer, dir2::Integer, face::Integer)
+        return av(A,x,y,z, dir1, dir2) - av(A,x-(face==1),y-(face==2),z-(face==3),dir1,dir2)
+    end
 
     #Stress calculations for anisotropic case
     @parallel_indices (x,y,z) function computeσAniso!(vx::Data.Array,vy::Data.Array,vz::Data.Array, σxx::Data.Array,
         σyy::Data.Array,σzz::Data.Array,σxy::Data.Array,σxz::Data.Array,σyz::Data.Array,
-        dtds::Data.Number, matGrid::Array{Int16,3}, mats::AbstractArray)
+        dtds::Data.Number, matGrid::Array{Int16,3}, mats::AbstractArray, cDict::Dict{Int64,Matrix{Float32}})
         
         #=From Halkjaer eq 4.7
         R+X
@@ -157,16 +157,19 @@ module EFIT
         U-Z
         D+Z
         =#
-
+    
 
 
         mID = matGrid[x,y,z]
-        N = CartesianIndex(x,y,z)
         #Velocity differencing terms
         dvxx = vx[x,y,z]-vx[x-1,y,z]
         dvyy = vy[x,y,z]-vy[x,y-1,z]
         dvzz = vz[x,y,z]-vz[x,y,z-1]
 
+        #Averaged Cs from Halkjaer 4.13, 4.14
+        c13 = cDict[hashIDX(matGrid[x,y,z],matGrid[x+1,y,z],matGrid[x,y,z+1],matGrid[x+1,y,z+1])]
+        c23 = cDict[hashIDX(matGrid[x,y,z],matGrid[x,y+1,z],matGrid[x,y,z+1],matGrid[x,y+1,z+1])]
+        c12 = cDict[hashIDX(matGrid[x,y,z],matGrid[x+1,y,z],matGrid[x,y+1,z],matGrid[x+1,y+1,z])]
 
         #Velocity averaging terms for 4.7
         #Terms cancelled per Leckey CNDE expansions
@@ -187,7 +190,25 @@ module EFIT
 
         #Shear stresses 
 
-    
+
+        #13 direction
+        vxa = sum(@view vx[x:x+1,y,z:z+1])-sum(@view vx[x-1:x,y,z:z+1])
+        vya = sum(@view vy[x:x+1,y,z:z+1])-sum(@view vy[x:x,y-1,z:z+1])
+        vza = sum(@view vz[x:x+1,y,z:z+1])-sum(@view vz[x:x+1,y,z-1:z])
+        σxz[x,y,z] = σxz[x,y,z] + 0.25*dtds * (c13[5,1]*vxa + c13[5,2]*vya + c13[5,3]*vza) + dtds*c13[5,5]*(vx[x,y,z+1]-vx[x,y,z]+vz[x+1,y,z]-vz[x,y,z])
+
+        
+        #23
+        vxa = sum(@view vx[x,y:y+1,z:z+1])-sum(@view vx[x-1,y:y+1,z:z+1])
+        vya = sum(@view vy[x,y:y+1,z:z+1])-sum(@view vy[x,y-1:y,z:z+1])
+        vza = sum(@view vz[x,y:y+1,z:z+1])-sum(@view vz[x,y:y+1,z-1:z])
+        σyz[x,y,z] = σyz[x,y,z] + 0.25*dtds * (c23[4,1]*vxa + c23[4,2]*vya + c23[4,3]*vza) + dtds*c23[4,4]*(vy[x,y,z+1]-vy[x,y,z]+vz[x,y+1,z]-vz[x,y,z])
+
+        #12
+        vxa = sum(@view vx[x:x+1,y:y+1,z])-sum(@view vx[x-1:x,y:y+1,z])
+        vya = sum(@view vy[x:x+1,y:y+1,z])-sum(@view vy[x:x+1,y-1:y,z])
+        vza = sum(@view vz[x:x+1,y:y+1,z])-sum(@view vz[x:x+1,y:y+1,z-1])
+        σxy[x,y,z] = σxy[x,y,z] + 0.25*dtds * (c12[6,1]*vxa + c12[6,2]*vya + c12[6,3]*vza) + dtds*c13[6,6]*(vx[x,y+1,z]-vx[x,y,z]+vy[x+1,y,z]-vy[x,y,z])
         return
     end
 
@@ -296,8 +317,9 @@ module EFIT
 
     end
 
-    #Helper function for index has
-    function sortFour(a,b,c,d)
+    
+    #Hash the material ids to get a dict key
+    function hashIDX(a::Integer,b::Integer,c::Integer,d::Integer)
         if a < b
             low1 = a
             high1 = b
@@ -327,19 +349,15 @@ module EFIT
             middle2 = high1
         end
         if middle1 < middle2
-            return (lowest,middle1,middle2,highest)
+            return Int64(lowest) + Int64(middle1) << 16 + Int64(middle2) << 32 + Int64(highest) << 48
+
         else
-            return (lowest,middle2,middle1,highest)
+            return Int64(lowest) + Int64(middle2) << 16 + Int64(middle1) << 32 + Int64(highest) << 48
         end
     end
-    #Hash the material ids to get a dict key
-    function hashIDX(a,b,c,d)
-        newIDs = sortFour(a,b,c,d)
-        return Int64(newIDs[1]) + Int64(newIDs[2]) << 16 + Int64(newIDs[3]) << 32 + Int64(newIDs[4]) << 48
-    end
-
 
     const offsets = [(CartesianIndex(1,0,0),CartesianIndex(0,1,0)),(CartesianIndex(0,1,0),CartesianIndex(0,0,1)),(CartesianIndex(1,0,0),CartesianIndex(0,0,1))]
+    #Calculate the material BC matrix permutations for dictionary storage
     function setAveragePerms!(dict::Dict{Int64,Matrix{Float32}}, matIDs::Array{Int16,3}, mats::Array{AnisoMat,1})
         xSize,ySize,zSize = size(matIDs)
 
@@ -350,7 +368,9 @@ module EFIT
                 c = matIDs[N+d[2]]
                 d = matIDs[N+d[1]+d[2]]
                 id = hashIDX(a,b,c,d)
+
                 if !haskey(dict, id)
+                    
                     dict[id] = inv(inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4
                 end
             end
