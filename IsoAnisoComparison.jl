@@ -60,7 +60,7 @@ nframes = 250
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
-fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 1e-5),colormap=:curl, transparency=true)
+fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 1e-6),colormap=:curl, transparency=true)
 
 #Step the simulation
 function stepSim(t)
