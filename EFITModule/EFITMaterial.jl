@@ -12,6 +12,9 @@ struct IsoMat <: EFITMaterial
         λ2μ = λ+2*μ
         new(ρ,λ,μ,λ2μ)
     end
+    function IsoMat(lam,mu,rho,lam2mu)
+        new(rho,lam,mu,lam2mu)
+    end
 end
 
 struct AnisoMat <: EFITMaterial
