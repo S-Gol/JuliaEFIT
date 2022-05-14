@@ -188,9 +188,8 @@ module EFIT
         σzz[x,y,z] = σzz[x,y,z] + dtds*(mats[mID].c[3,1]*dvxx + mats[mID].c[3,2]*dvyy + mats[mID].c[3,3]*dvzz + 
             mats[mID].c[3,4] * vi4 + mats[mID].c[3,5] * vi5 + mats[mID].c[3,6] * vi6)
 
-        #Shear stresses 
-
-
+        #Shear stresses
+        #These still need the additional off-diagonal terms. Omitted for testing.
         #13 direction
         vxa = sum(@view vx[x:x+1,y,z:z+1])-sum(@view vx[x-1:x,y,z:z+1])
         vya = sum(@view vy[x:x+1,y,z:z+1])-sum(@view vy[x:x,y-1,z:z+1])
@@ -371,7 +370,7 @@ module EFIT
 
                 if !haskey(dict, id)
                     
-                    dict[id] = inv(inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4
+                    dict[id] = inv((inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4)
                 end
             end
         end

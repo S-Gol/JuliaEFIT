@@ -24,7 +24,7 @@ matGrid = ones(Int16, nx,ny,nz)
 #Create the array of materials to be used 
 #Use anisotropic stiffness matrices for isotropic materials 
 materials = [Main.EFIT.AnisoMat(Main.EFIT.IsoMats["steel"]),
-Main.EFIT.AnisoMat(Main.EFIT.IsoMats["steel"])]
+Main.EFIT.AnisoMat(Main.EFIT.IsoMats["Polyethylene"])]
 display(materials[1].c)
 #Add a section of the second reflector in the middle
 matGrid[40:60,40:60,50:60] .=2
