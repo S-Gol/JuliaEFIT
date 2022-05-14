@@ -23,8 +23,9 @@ nx = ny = nz = 100
 matGrid = ones(Int16, nx,ny,nz)
 #Create the array of materials to be used 
 #Use anisotropic stiffness matrices for isotropic materials 
-materials = [Main.EFIT.AnisoMat(Main.EFIT.IsoMats["steel"]),
-Main.EFIT.AnisoMat(Main.EFIT.IsoMats["Polyethylene"])]
+materials = [Main.EFIT.IsoMats["steel"], Main.EFIT.IsoMats["Polystyrene"]]
+anisoMaterials = [Main.EFIT.AnisoMat(m) for m in materials]
+
 #Add a section of the second reflector in the middle
 matGrid[40:60,40:60,50:60] .=2
 #Maximum sound speed in the model
@@ -39,8 +40,9 @@ dx = c/(8*f0)
 dt = dx/(c*sqrt(3))
 
 #Create the grid class that stores all simulation information
-grid = Main.EFIT.EFITGrid(matGrid,materials,dt,dx);
-
+isoGrid = Main.EFIT.EFITGrid(matGrid,materials,dt,dx);
+anisoGrid = Main.EFIT.EFITGrid(matGrid,anisoMaterials,dt,dx);
+grids = [isoGrid, anisoGrid]
 
 #Create a source function from which input can be taken
 function source(t)
@@ -58,18 +60,20 @@ nframes = 250
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
-fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.02),colormap=:curl, transparency=true)
+fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 1e-5),colormap=:curl, transparency=true)
 
 #Step the simulation
 function stepSim(t)
     println(t)
-    #Isotropic step function
-    Main.EFIT.SimStep!(grid)
-    #Apply the source to the Z-direction
-    @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
+    for g in grids
+        Main.EFIT.SimStep!(g)
+        @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(g.vx,g.vy,g.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
+
+    end
+    error = sqrt.((isoGrid.vx .- anisoGrid.vx).^2 + (isoGrid.vy .- anisoGrid.vy).^2 + (isoGrid.vz .- anisoGrid.vz).^2)
 
     #Update the plot
-    plt.volume = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
+    plt.volume = error
 end
 
 
