@@ -2,7 +2,7 @@ module EFIT
     using LoopVectorization
     
     include("EFITMaterial.jl")
-    export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, writeToBOV
+    export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, AnisoMats, AnisoMat, writeToBOV
 
     using ParallelStencil
     using ParallelStencil.FiniteDifferences3D

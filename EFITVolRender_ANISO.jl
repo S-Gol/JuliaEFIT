@@ -23,12 +23,13 @@ nx = ny = nz = 100
 matGrid = ones(Int16, nx,ny,nz)
 #Create the array of materials to be used 
 #Use anisotropic stiffness matrices for isotropic materials 
-materials = [Main.EFIT.AnisoMat(Main.EFIT.IsoMats["steel"]),
+materials = [Main.EFIT.AnisoMats["X6CrNi1811"],
 Main.EFIT.AnisoMat(Main.EFIT.IsoMats["Polyethylene"])]
+display(materials[1].c)
 #Add a section of the second reflector in the middle
 matGrid[40:60,40:60,50:60] .=2
 #Maximum sound speed in the model
-c = 6000
+c = 8000
 #Frequency, hz
 f0=1e6
 #Period
