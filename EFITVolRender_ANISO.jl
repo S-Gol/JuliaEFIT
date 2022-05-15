@@ -54,12 +54,12 @@ const sx=50
 const sy=50
 const sz=98
 
-# animation settings
-nframes = 250
+# animation settings0
+nframes = 400
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
-fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.02),colormap=:curl, transparency=true)
+fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.04),colormap=:curl, transparency=true)
 
 #Step the simulation
 function stepSim(t)
