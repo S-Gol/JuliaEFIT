@@ -50,7 +50,7 @@ struct AnisoMat <: EFITMaterial
         c[1,3] = c[2,3] = c13
         c[4,4] = c[5,5] = c44
         c[6,6] = c66
-        new(ρ,Symmetric(C))
+        new(ρ,Symmetric(c))
     end
 end
 #Sample materials

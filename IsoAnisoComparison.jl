@@ -59,8 +59,8 @@ const sz=98
 nframes = 250
 framerate = 30
 
-tIterator = 0:grid.dt:grid.dt*nframes
-fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 1e-6),colormap=:curl, transparency=true)
+tIterator = 0:isoGrid.dt:isoGrid.dt*nframes
+fig,ax,plt = volume(Array(isoGrid.vx),algorithm=:mip,colorrange = (0, 1e-6),colormap=:curl, transparency=true)
 
 #Step the simulation
 function stepSim(t)

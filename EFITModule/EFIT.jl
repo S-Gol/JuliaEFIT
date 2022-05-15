@@ -190,24 +190,50 @@ module EFIT
 
         #Shear stresses
         #These still need the additional off-diagonal terms. Omitted for testing.
+
+
         #13 direction
         vxa = sum(@view vx[x:x+1,y,z:z+1])-sum(@view vx[x-1:x,y,z:z+1])
         vya = sum(@view vy[x:x+1,y,z:z+1])-sum(@view vy[x:x,y-1,z:z+1])
         vza = sum(@view vz[x:x+1,y,z:z+1])-sum(@view vz[x:x+1,y,z-1:z])
-        σxz[x,y,z] = σxz[x,y,z] + 0.25*dtds * (c13[5,1]*vxa + c13[5,2]*vya + c13[5,3]*vza) + dtds*c13[5,5]*(vx[x,y,z+1]-vx[x,y,z]+vz[x+1,y,z]-vz[x,y,z])
+
+        dvydz = (vy[x,y,z] + vy[x+1,y,z] + vy[x,y-1,z] + vy[x+1,y-1,z])-(vy[x,y,z-1] + vy[x+1,y,z-1] + vy[x,y-1,z-1] + vy[x+1,y-1,z-1])
+        dvzdy = (vz[x,y+1,z] + vz[x+1,y+1,z]) - (vz[x,y-1,z] + vz[x+1,y-1,z])
+        dvxdy = (vx[x,y+1,z] + vx[x,y+1,z+1]) - (vx[x,y-1,z] + vx[x,y-1,z+1])
+        dvydx = (vy[x+1,y,z] + vy[x+1,y,z+1] +  vy[x+1,y-1,z] + vy[x+1,y-1,z+1])-(vy[x,y,z] + vy[x,y,z+1] +  vy[x,y-1,z] + vy[x,y-1,z+1])
+
+        diag = dtds*c13[5,5]*(vx[x,y,z+1]-vx[x,y,z]+vz[x+1,y,z]-vz[x,y,z])
+
+        σxz[x,y,z] = σxz[x,y,z] + 0.25*dtds * (c13[5,1]*vxa + c13[5,2]*vya + c13[5,3]*vza + c13[5,4]*(dvydz + dvzdy) + c13[5,6]*(dvxdy + dvydx)) + diag
 
         
         #23
         vxa = sum(@view vx[x,y:y+1,z:z+1])-sum(@view vx[x-1,y:y+1,z:z+1])
         vya = sum(@view vy[x,y:y+1,z:z+1])-sum(@view vy[x,y-1:y,z:z+1])
         vza = sum(@view vz[x,y:y+1,z:z+1])-sum(@view vz[x,y:y+1,z-1:z])
-        σyz[x,y,z] = σyz[x,y,z] + 0.25*dtds * (c23[4,1]*vxa + c23[4,2]*vya + c23[4,3]*vza) + dtds*c23[4,4]*(vy[x,y,z+1]-vy[x,y,z]+vz[x,y+1,z]-vz[x,y,z])
+
+        dvxdz = (vx[x,y,z+1] + vx[x-1,y,z+1]+vx[x,y+1,z+1] + vx[x-1,y+1,z+1])-(vx[x,y,z] + vx[x-1,y,z]+vx[x,y+1,z] + vx[x-1,y+1,z])
+        dvzdx = (vz[x+1,y,z] + vz[x+1,y+1,z])-(vz[x-1,y,z] + vz[x-1,y+1,z])
+        dvxdy = (vx[x,y+1,z] + vx[x-1,y+1,z] + vx[x-1,y+1,z+1] + vx[x,y+1,z+1]) - (vx[x,y,z] + vx[x-1,y,z] + vx[x-1,y,z+1] + vx[x,y,z+1])
+        dvydx = (vy[x+1] + vy[x+1,y,z+1]) - (vy[x-1,y,z] + vy[x-1,y,z+1])
+
+        diag = dtds*c23[4,4]*(vy[x,y,z+1]-vy[x,y,z]+vz[x,y+1,z]-vz[x,y,z])
+        
+        σyz[x,y,z] = σyz[x,y,z] + 0.25*dtds * (c23[4,1]*vxa + c23[4,2]*vya + c23[4,3]*vza + c23[4,5] * (dvxdz + dvzdx) + c23[4,6]*(dvxdy + dvydx)) + diag
 
         #12
         vxa = sum(@view vx[x:x+1,y:y+1,z])-sum(@view vx[x-1:x,y:y+1,z])
         vya = sum(@view vy[x:x+1,y:y+1,z])-sum(@view vy[x:x+1,y-1:y,z])
         vza = sum(@view vz[x:x+1,y:y+1,z])-sum(@view vz[x:x+1,y:y+1,z-1])
-        σxy[x,y,z] = σxy[x,y,z] + 0.25*dtds * (c12[6,1]*vxa + c12[6,2]*vya + c12[6,3]*vza) + dtds*c12[6,6]*(vx[x,y+1,z]-vx[x,y,z]+vy[x+1,y,z]-vy[x,y,z])
+
+        dvydz = (vy[x,y,z+1] + vy[x+1,y,z+1]) - (vy[x,y,z-1] + vy[x+1,y,z-1])
+        dvzdy = (vz[x,y+1,z] +vz[x+1,y+1,z]) - (vz[x,y-1,z] + vz[x+1,y-1,z])
+        dvxdz = (vx[x,y,z+1] + vx[x,y+1,z+1])-(vx[x,y,z-1] + vx[x,y+1,z-1])
+        dvzdx = (vz[x+1,y,z]+vz[x+1,y+1,z] + vz[x+1,y,z+1] + vz[x+1,y+1,z+1])-(vz[x,y,z]+vz[x,y+1,z] + vz[x,y,z+1] + vz[x,y+1,z+1])
+
+        diag = dtds*c12[6,6]*(vx[x,y+1,z]-vx[x,y,z]+vy[x+1,y,z]-vy[x,y,z])
+
+        σxy[x,y,z] = σxy[x,y,z] + 0.25*dtds * (c12[6,1]*vxa + c12[6,2]*vya + c12[6,3]*vza + c12[6,4]*(dvydz + dvzdy) + c12[6,5]*(dvxdz + dvzdx)) + diag
         return
     end
 
