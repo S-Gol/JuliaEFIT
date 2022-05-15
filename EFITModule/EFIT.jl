@@ -188,9 +188,8 @@ module EFIT
         σzz[x,y,z] = σzz[x,y,z] + dtds*(mats[mID].c[3,1]*dvxx + mats[mID].c[3,2]*dvyy + mats[mID].c[3,3]*dvzz + 
             mats[mID].c[3,4] * vi4 + mats[mID].c[3,5] * vi5 + mats[mID].c[3,6] * vi6)
 
-        #Shear stresses 
-
-
+        #Shear stresses
+        #These still need the additional off-diagonal terms. Omitted for testing.
         #13 direction
         vxa = sum(@view vx[x:x+1,y,z:z+1])-sum(@view vx[x-1:x,y,z:z+1])
         vya = sum(@view vy[x:x+1,y,z:z+1])-sum(@view vy[x:x,y-1,z:z+1])
@@ -208,7 +207,7 @@ module EFIT
         vxa = sum(@view vx[x:x+1,y:y+1,z])-sum(@view vx[x-1:x,y:y+1,z])
         vya = sum(@view vy[x:x+1,y:y+1,z])-sum(@view vy[x:x+1,y-1:y,z])
         vza = sum(@view vz[x:x+1,y:y+1,z])-sum(@view vz[x:x+1,y:y+1,z-1])
-        σxy[x,y,z] = σxy[x,y,z] + 0.25*dtds * (c12[6,1]*vxa + c12[6,2]*vya + c12[6,3]*vza) + dtds*c13[6,6]*(vx[x,y+1,z]-vx[x,y,z]+vy[x+1,y,z]-vy[x,y,z])
+        σxy[x,y,z] = σxy[x,y,z] + 0.25*dtds * (c12[6,1]*vxa + c12[6,2]*vya + c12[6,3]*vza) + dtds*c12[6,6]*(vx[x,y+1,z]-vx[x,y,z]+vy[x+1,y,z]-vy[x,y,z])
         return
     end
 
@@ -362,16 +361,16 @@ module EFIT
         xSize,ySize,zSize = size(matIDs)
 
         for N in CartesianIndices((2:xSize-1,2:ySize-1,2:zSize-1))
-            for d in offsets
+            for dir in offsets
                 a = matIDs[N]
-                b = matIDs[N+d[1]]
-                c = matIDs[N+d[2]]
-                d = matIDs[N+d[1]+d[2]]
+                b = matIDs[N+dir[1]]
+                c = matIDs[N+dir[2]]
+                d = matIDs[N+dir[1]+dir[2]]
                 id = hashIDX(a,b,c,d)
 
                 if !haskey(dict, id)
                     
-                    dict[id] = inv(inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4
+                    dict[id] = inv((inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4)
                 end
             end
         end

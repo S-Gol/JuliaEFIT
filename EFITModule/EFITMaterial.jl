@@ -42,7 +42,16 @@ struct AnisoMat <: EFITMaterial
     function AnisoMat(ρ::Number, C::AbstractMatrix)
         new(ρ,Symmetric(C))
     end
-
+    #Transversely isotropic constructor
+    function AnisoMat(ρ, c11, c12, c13, c33, c44, c66)
+        c = zeros(Float32,6,6)
+        c[1,1] = c[2,2] = c11
+        c[1,2] = c12
+        c[1,3] = c[2,3] = c13
+        c[4,4] = c[5,5] = c44
+        c[6,6] = c66
+        new(ρ,Symmetric(C))
+    end
 end
 #Sample materials
 IsoMats = Dict(
@@ -74,4 +83,12 @@ IsoMats = Dict(
     "Nylon"=>IsoMat(2620, 1070, 1110),
     "Polyethylene"=>IsoMat(1950, 540, 900),
     "Polystyrene"=>IsoMat(2350, 1120, 1060),
+)
+
+AnisoMats = Dict(
+    #From Halkjaer table 2.3
+    "X6CrNi1811"=>AnisoMat(7.82e3,2.411e11,0.969e11,1.38e11,2.40e11,1.1229e11,0.7209e11),
+    "X6CrNi1812"=>AnisoMat(7.9e3,2.63e11,0.983e11,1.45e11,2.16e11,1.29e11,0.823e11),
+    "Inconel182"=>AnisoMat(8.61e3,2.78e11,1.15e11,1.3889e11,2.5376e11,1.06e11,0.817e11)
+
 )
