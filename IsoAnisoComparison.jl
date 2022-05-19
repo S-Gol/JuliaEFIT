@@ -71,7 +71,7 @@ function stepSim(t)
 
     end
     error = sqrt.((isoGrid.vx .- anisoGrid.vx).^2 + (isoGrid.vy .- anisoGrid.vy).^2 + (isoGrid.vz .- anisoGrid.vz).^2)
-
+    println(maximum(error))
     #Update the plot
     plt.volume = error
 end
