@@ -23,9 +23,9 @@ module ARBSCATT
         nz = paramDict["nz"]
 
         #Load the ARBSCATT file itself
-        v = Array{Int}(undef, nx, ny, nz)
+        v = Array{Int16}(undef, nx, ny, nz)
         @inbounds for (i, c) in enumerate(@view read("$dir/ARBSCATT.file")[2:2:end])
-            v[i] = Int(c - 0x30)
+            v[i] = Int16(c - 0x30)
         end
         return (v,paramDict)
     end

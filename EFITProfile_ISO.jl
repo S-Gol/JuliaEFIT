@@ -11,14 +11,14 @@ println("n threads: $nThreads")
 #Material declarationsj
 materials = [Main.EFIT.IsoMat(3300.0, 1905.0, 2800.0)]
 
-matGrid = ones(Int32, 100, 100, 100);
+matGrid = ones(Int32, 612, 229, 229);
 grid = Main.EFIT.EFITGrid(matGrid,materials,0.00001,1);
 Main.EFIT.SimStep!(grid)
 
 
 
 function profile()
-    for i in 1:50
+    for i in 1:510
         println(i)
         Main.EFIT.SimStep!(grid)
     end
@@ -32,7 +32,7 @@ end
 #@time Main.EFIT.SimStep!(grid)
 #@ProfileView.profview profile()   
 #trace Main.EFIT.velUpdate!(grid,CartesianIndex(5,5,5))
-
+@time profile()
 #@benchmark Main.EFIT.SimStep!(grid)
 
 #println("Old velocity benchmark: ")
@@ -40,5 +40,5 @@ end
 
 #println("ParallelStencil benchmark: ")
 
-@benchmark Main.EFIT.SimStep!(grid)
+#@benchmark Main.EFIT.SimStep!(grid)
 #Main.EFIT.SimStep!(grid)
