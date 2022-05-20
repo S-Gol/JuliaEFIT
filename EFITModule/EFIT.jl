@@ -2,7 +2,10 @@ module EFIT
     using LoopVectorization
     
     include("EFITMaterial.jl")
-    export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, AnisoMats, AnisoMat, writeToBOV
+    include("Rotation.jl")
+
+    export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, AnisoMats
+    export AnisoMat, writeToBOV, rotTensor6x6, rotateMatrix
 
     using ParallelStencil
     using ParallelStencil.FiniteDifferences3D
