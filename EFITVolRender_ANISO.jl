@@ -8,8 +8,9 @@ include("EFITModule/EFIT.jl")
 
 
 
-ParallelStencil.@reset_parallel_stencil()
 USE_GPU = false
+ParallelStencil.@reset_parallel_stencil()
+
 @static if USE_GPU
     @init_parallel_stencil(CUDA, Float32, 3)
 else
@@ -23,9 +24,15 @@ nx = ny = nz = 100
 matGrid = ones(Int16, nx,ny,nz)
 #Create the array of materials to be used 
 #Use anisotropic stiffness matrices for isotropic materials 
-materials = [Main.EFIT.AnisoMats["X6CrNi1811"],
-Main.EFIT.AnisoMat(Main.EFIT.IsoMats["Polyethylene"])]
-display(materials[1].c)
+
+
+c = Main.EFIT.AnisoMats["X6CrNi1811"].c
+rho = Main.EFIT.AnisoMats["X6CrNi1811"].ρ
+
+mat2 = Main.EFIT.AnisoMat(rho, Main.EFIT.rotateMatrix(c,45,45,45))
+
+materials = [Main.EFIT.AnisoMats["X6CrNi1811"],mat2]
+
 #Add a section of the second reflector in the middle
 matGrid[40:60,40:60,50:60] .=2
 #Maximum sound speed in the model
@@ -55,7 +62,7 @@ const sy=50
 const sz=98
 
 # animation settings0
-nframes = 400
+nframes = 800
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes

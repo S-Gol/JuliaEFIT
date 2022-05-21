@@ -5,18 +5,18 @@ module EFIT
     include("Rotation.jl")
 
     export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, AnisoMats
-    export AnisoMat, writeToBOV, rotTensor6x6, rotateMatrix
+    export AnisoMat, writeToBOV, rotateMatrix
 
     using ParallelStencil
     using ParallelStencil.FiniteDifferences3D
-    ParallelStencil.@reset_parallel_stencil()
-    
     USE_GPU = false
+    ParallelStencil.@reset_parallel_stencil()
     @static if USE_GPU
         @init_parallel_stencil(CUDA, Float32, 3)
     else
         @init_parallel_stencil(Threads, Float32, 3)
     end
+
 
 
     struct EFITGrid{T<:EFITMaterial}
@@ -408,7 +408,6 @@ module EFIT
         println("Initialized averaging dict, hashed $n material combinations")
         println("")
 
-        display(dict)
     end
 
 end
