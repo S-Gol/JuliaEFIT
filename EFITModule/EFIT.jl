@@ -228,9 +228,11 @@ module EFIT
         vxa = sum(@view vx[x:x+1,y:y+1,z])-sum(@view vx[x-1:x,y:y+1,z])
         vya = sum(@view vy[x:x+1,y:y+1,z])-sum(@view vy[x:x+1,y-1:y,z])
         vza = sum(@view vz[x:x+1,y:y+1,z])-sum(@view vz[x:x+1,y:y+1,z-1])
+#Divergence fix?
+        dvzdy = (vz[x,y+1,z] + vz[x+1,y+1,z] + vz[x+1,y+1,z-1]+vz[x,y+1,z-1]) - (vz[x,y,z] + vz[x+1,y,z] + vz[x+1,y,z-1]+vz[x,y,z-1])
 
         dvydz = (vy[x,y,z+1] + vy[x+1,y,z+1]) - (vy[x,y,z-1] + vy[x+1,y,z-1])
-        dvzdy = (vz[x,y+1,z] +vz[x+1,y+1,z]) - (vz[x,y-1,z] + vz[x+1,y-1,z])
+        #dvzdy = (vz[x,y+1,z] +vz[x+1,y+1,z]) - (vz[x,y-1,z] + vz[x+1,y-1,z])
         dvxdz = (vx[x,y,z+1] + vx[x,y+1,z+1])-(vx[x,y,z-1] + vx[x,y+1,z-1])
         dvzdx = (vz[x+1,y,z]+vz[x+1,y+1,z] + vz[x+1,y,z+1] + vz[x+1,y+1,z+1])-(vz[x,y,z]+vz[x,y+1,z] + vz[x,y,z+1] + vz[x,y+1,z+1])
 
@@ -399,7 +401,7 @@ module EFIT
 
                 if !haskey(dict, id)
                     
-                    dict[id] = inv((inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))/4)
+                    dict[id] = inv((inv(mats[a].c) + inv(mats[b].c) + inv(mats[c].c) + inv(mats[d].c))*0.25)
                 end
             end
         end

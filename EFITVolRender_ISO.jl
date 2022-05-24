@@ -32,7 +32,7 @@ f0=1e6
 #Period
 t0 = 1.00 / f0
 #Maximum spatial increment
-dx = c/(8*f0)
+dx = 0.8*c/(8*f0)
 #Maximum time increment
 dt = dx/(c*sqrt(3))
 
@@ -61,13 +61,20 @@ for i in grid.matPermDict
 
     display(i)
 end
+
+a=45
+c = cos(deg2rad(a))
+s = sin(deg2rad(a))
+
+
 #Step the simulation
 function stepSim(t)
     println(t)
     #Isotropic step function
     Main.EFIT.SimStep!(grid)
     #Apply the source to the Z-direction
-    @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
+    fx = source(t)
+    @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(fx*c), Data.Number(fx*s))
 
     #Update the plot
     plt.volume = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
