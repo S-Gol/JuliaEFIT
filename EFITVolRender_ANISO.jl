@@ -6,8 +6,6 @@ using ParallelStencil.FiniteDifferences3D
 using NPZ
 include("EFITModule/EFIT.jl")
 
-
-
 USE_GPU = false
 ParallelStencil.@reset_parallel_stencil()
 
@@ -16,8 +14,6 @@ ParallelStencil.@reset_parallel_stencil()
 else
     @init_parallel_stencil(Threads, Float32, 3)
 end
-
-
 
 #Create a grid of integer material indices 
 nx = ny = nz = 100
@@ -29,7 +25,7 @@ matGrid = ones(Int16, nx,ny,nz)
 c = Main.EFIT.AnisoMats["Inconel182"].c
 rho = Main.EFIT.AnisoMats["Inconel182"].ρ
 
-mat2 = Main.EFIT.AnisoMat(rho, Main.EFIT.rotateMatrix(c,0,0,45))
+mat2 = Main.EFIT.AnisoMat(rho, Main.EFIT.rotateMatrix(c,90,0,0))
 
 materials = [Main.EFIT.AnisoMats["X6CrNi1811"],mat2]
 
@@ -42,7 +38,7 @@ f0=1e6
 #Period
 t0 = 1.00 / f0
 #Maximum spatial increment
-dx = 0.2*c/(8*f0)
+dx = 0.5*c/(8*f0)
 #Maximum time increment
 dt = dx/(c*sqrt(3))
 

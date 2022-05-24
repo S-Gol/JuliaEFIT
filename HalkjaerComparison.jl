@@ -26,15 +26,27 @@ sourceWidth = 26.6e-3
 
 nx = round(Integer, L/dx)
 nz = round(Integer, H/dx)
+
+
+ny = nx
+
 sx = round(Integer, L/(2*dx))
-ny = 3
+sy = round(Integer, 0.5*ny)
 ns = round(Integer,0.5*sourceWidth/dx)
 
 #Create a grid of integer material indices 
 matGrid = ones(Int16, nx,ny,nz)
+#Stress-free edges
+th = 3
+matGrid[1:th,:,:] .= 2
+matGrid[(nx-th):nx,:,:] .= 2
+
+matGrid[:,:,1:th] .= 2
+matGrid[:,:,(nz-th):nz] .= 2
+
 
 #Use anisotropic stiffness matrices for isotropic materials 
-materials = [Main.EFIT.AnisoMats["X6CrNi1812"]]
+materials = [Main.EFIT.IsoMats["Austenite"],Main.EFIT.IsoMat(10,5,10)]
 
 grid = Main.EFIT.EFITGrid(matGrid,materials,dt,dx);
 
@@ -53,10 +65,9 @@ function source(t)
 end
 
 # animation settings0
-nframes = 5000
 framerate = 30
 
-tIterator = 0:grid.dt:4.5e-6
+tIterator = 0:grid.dt:5e-6
 
 fig = Figure(resolution = (900, 300))
 fig[1,1] = Axis(fig)
@@ -68,8 +79,8 @@ function stepSim(t)
     #Isotropic step function
     Main.EFIT.SimStep!(grid)
     #Apply the source to the Z-direction
-    @parallel ((sx-ns):(sx+ns),1:3,nz-1:nz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
-
+    @parallel ((sx-ns):(sx+ns),(sy-ns):(sy+ns),(nz-th-2):nz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
+    #=
     grid.vx[:,1,:] .= grid.vx[:,3,:] .= grid.vx[:,2,:]
     grid.vy[:,1,:] .= grid.vy[:,3,:] .= grid.vy[:,2,:]
     grid.vz[:,1,:] .= grid.vz[:,3,:] .= grid.vz[:,2,:]
@@ -81,9 +92,9 @@ function stepSim(t)
     grid.σxz[:,1,:] .= grid.σxz[:,3,:] .= grid.σxz[:,2,:]
     grid.σyz[:,1,:] .= grid.σyz[:,3,:] .= grid.σyz[:,2,:]
     grid.σxy[:,1,:] .= grid.σxy[:,3,:] .= grid.σxy[:,2,:]
+    =#
 
-
-    velMag = sqrt.(grid.vx[:,2,:].^2 .+ grid.vy[:,2,:].^2 .+ grid.vz[:,2,:].^2)
+    velMag = sqrt.(grid.vx[:,round(Int,end/2),:].^2 .+ grid.vy[:,round(Int,end/2),:].^2 .+ grid.vz[:,round(Int,end/2),:].^2)
     p0 = maximum(velMag)
 
     #Update the plot
