@@ -29,7 +29,7 @@ matGrid = ones(Int16, nx,ny,nz)
 c = Main.EFIT.AnisoMats["Inconel182"].c
 rho = Main.EFIT.AnisoMats["Inconel182"].ρ
 
-mat2 = Main.EFIT.AnisoMat(rho, Main.EFIT.rotateMatrix(c,0,0,45))
+mat2 = Main.EFIT.AnisoMat(rho, Main.EFIT.rotMatrix(c,34,32,0))
 
 materials = [Main.EFIT.AnisoMats["X6CrNi1811"],mat2]
 
@@ -42,7 +42,7 @@ f0=1e6
 #Period
 t0 = 1.00 / f0
 #Maximum spatial increment
-dx = 0.2*c/(8*f0)
+dx = 0.5*c/(8*f0)
 #Maximum time increment
 dt = dx/(c*sqrt(3))
 
@@ -62,7 +62,7 @@ const sy=50
 const sz=98
 
 # animation settings0
-nframes = 4000
+nframes = 500
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes

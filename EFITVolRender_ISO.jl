@@ -52,11 +52,11 @@ const sy=50
 const sz=98
 
 # animation settings
-nframes = 250
+nframes = 800
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
-fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.01),colormap=:curl, transparency=true)
+fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.04),colormap=:curl, transparency=true)
 for i in grid.matPermDict
 
     display(i)
