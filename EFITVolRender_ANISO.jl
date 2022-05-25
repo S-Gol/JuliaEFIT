@@ -6,8 +6,6 @@ using ParallelStencil.FiniteDifferences3D
 using NPZ
 include("EFITModule/EFIT.jl")
 
-
-
 USE_GPU = false
 ParallelStencil.@reset_parallel_stencil()
 
@@ -16,8 +14,6 @@ ParallelStencil.@reset_parallel_stencil()
 else
     @init_parallel_stencil(Threads, Float32, 3)
 end
-
-
 
 #Create a grid of integer material indices 
 nx = ny = nz = 100
