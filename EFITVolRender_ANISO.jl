@@ -70,7 +70,7 @@ function stepSim(t)
     #Isotropic step function
     Main.EFIT.SimStep!(grid)
     #Apply the source to the Z-direction
-    @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(0.0), (source(t)))
+    @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(source(t)), (source(t)))
 
     #Update the plot
     plt.volume = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)

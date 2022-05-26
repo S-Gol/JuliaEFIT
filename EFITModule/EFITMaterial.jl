@@ -85,7 +85,7 @@ IsoMats = Dict(
     "Polyethylene"=>IsoMat(1950, 540, 900),
     "Polystyrene"=>IsoMat(2350, 1120, 1060),
     "Austenite"=>IsoMat(5758, 3132, 8.42e3),
-
+    "AISI1018"=>IsoMat(5918, 3225, 7870)
 )
 
 AnisoMats = Dict(

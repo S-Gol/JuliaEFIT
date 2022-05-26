@@ -5,7 +5,7 @@ module EFIT
     include("Rotation.jl")
 
     export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, AnisoMats
-    export AnisoMat, writeToBOV, rotateMatrix, hashIDX
+    export AnisoMat, writeToBOV, rotateMatrix, hashIDX, rotateMatrix
 
     using ParallelStencil
     using ParallelStencil.FiniteDifferences3D
