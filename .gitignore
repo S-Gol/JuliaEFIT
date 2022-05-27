@@ -8,4 +8,4 @@ heatmap.gif
 /BOVTests
 misc.jl
 /images
-*.STL
+meshing.py

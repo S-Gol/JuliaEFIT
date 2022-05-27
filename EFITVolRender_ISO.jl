@@ -22,50 +22,35 @@ end
 nx = ny = nz = 100
 matGrid = ones(Int, nx,ny,nz)
 #Create the array of materials to be used 
-materials = [Main.EFIT.IsoMats["steel"],Main.EFIT.IsoMats["steel"]]
+materials = [Main.EFIT.IsoMat(100,0,10),Main.EFIT.IsoMats["Austenite"]]
 #Add a section of the second reflector in the middle
-matGrid[40:60,40:60,50:60] .=2
+matGrid.= 1
+matGrid[2:end-3,2:end-3,2:end-3].=2
+
 #Maximum sound speed in the model
 c = 6000
 #Frequency, hz
 f0=1e6
-#Period
-t0 = 1.00 / f0
+
 #Maximum spatial increment
-dx = 0.8*c/(8*f0)
+dx = 0.5*c/(8*f0)
 #Maximum time increment
 dt = dx/(c*sqrt(3))
 
 #Create the grid class that stores all simulation information
 grid = Main.EFIT.EFITGrid(matGrid,materials,dt,dx);
 
-
-#Create a source function from which input can be taken
-function source(t)
-    v = exp(-((2*(t-2*t0)/(t0))^2))*sin(2*pi*f0*t)*0.1
-    return Data.Number(v)
-end
-
 #Source positions
-const sx=50
-const sy=50
-const sz=98
+sx=50
+sy=50
+sz=97
 
 # animation settings
-nframes = 800
+nframes = 1600
 framerate = 30
 
 tIterator = 0:grid.dt:grid.dt*nframes
 fig,ax,plt = volume(Array(grid.vx),algorithm=:mip,colorrange = (0, 0.04),colormap=:curl, transparency=true)
-for i in grid.matPermDict
-
-    display(i)
-end
-
-a=45
-c = cos(deg2rad(a))
-s = sin(deg2rad(a))
-
 
 #Step the simulation
 function stepSim(t)
@@ -73,14 +58,10 @@ function stepSim(t)
     #Isotropic step function
     Main.EFIT.SimStep!(grid)
     #Apply the source to the Z-direction
-    fx = source(t)
-    @parallel (45:55,45:55,sz:sz) Main.EFIT.applySource!(grid.vx,grid.vy,grid.vz, Data.Number(0.0), Data.Number(fx*c), Data.Number(fx*s))
-
+    Main.EFIT.applyShapedSource!(grid, (sx,sy,sz),(1,2),t,sourceParams=(f0),shape=(10),θ=0,ϕ=0)
     #Update the plot
     plt.volume = sqrt.(grid.vx.^2 .+ grid.vy.^2 .+ grid.vz.^2)
 end
-
-
 
 record(stepSim, fig, "color_animation.mp4", tIterator; framerate = 30)
 
