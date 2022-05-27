@@ -5,7 +5,7 @@ module EFIT
     include("Rotation.jl")
 
     export EFITGrid, EFITMaterial, IsoMat, IsoSim, IsoMats, AnisoMats
-    export AnisoMat, writeToBOV, rotateMatrix, hashIDX, rotateMatrix
+    export AnisoMat, writeToBOV, rotateMatrix, hashIDX, rotateMatrix, applyShapedSource!
 
     using ParallelStencil
     using ParallelStencil.FiniteDifferences3D
@@ -107,7 +107,6 @@ module EFIT
         grid.σxx,grid.σyy,grid.σzz,grid.σxy,grid.σxz,grid.σyz,
         grid.dtds,grid.matGrid,grid.materials,grid.matPermDict
         )
-
     end
 
     #Velocity calculations - common between isotropic and anisotropic
@@ -410,6 +409,60 @@ module EFIT
         println("Initialized averaging dict, hashed $n material combinations")
         println("")
 
+    end
+
+
+    function GaussSource(t,params)
+        f0=params[1]
+        t0=1/f0
+        v = exp(-((2*(t-2*t0)/(t0))^2))*sin(2*pi*f0*t)*0.1
+        return Data.Number(v)
+    end
+
+
+    function applyShapedSource!(grid::EFITGrid, pos::Tuple{Integer,Integer,Integer}, plane::Tuple{Integer,Integer},t::Number; c = 6000, shape=(10), func=GaussSource, θ=0,ϕ=0,sourceParams=(1e6))
+        
+        offA = (plane[1]==1,plane[1]==2,plane[1]==3)
+        offB = (plane[2]==1,plane[2]==2,plane[2]==3)
+
+        τa = sin(deg2rad(θ))*cos(deg2rad(ϕ))
+        τb = sin(deg2rad(θ))*sin(deg2rad(ϕ))
+    
+
+        if 1 ∉ plane
+            v=grid.vx
+        elseif 2 ∉ plane
+            v=grid.vy
+        elseif 3 ∉ plane
+            v = grid.vz
+        end
+
+        @assert(size(shape,1)<=2,"Incorrect source shape tuple")
+        #rectangle
+        if (size(shape,1)==2)
+            a,b = shape
+
+            for i in -a:a
+                for j in -b:b
+                    newPos = pos .+ i.*offA.+j.*offB 
+                    τ=(grid.ds/c)*(i*τa+j*τb)
+                    v[newPos[1],newPos[2],newPos[3]]+=func(t+τ, sourceParams)
+                end  
+            end
+        #Circle
+        elseif (size(shape,1)==1)
+            r=shape
+
+            for i in -r:r
+                for j in -r:r
+                    if (i^2+j^2)<r^2
+                        newPos = pos .+ i.*offA.+j.*offB 
+                        τ=(grid.ds/c)*(i*τa+j*τb)
+                        v[newPos[1],newPos[2],newPos[3]]+=func(t+τ, sourceParams)
+                    end
+                end  
+            end
+        end
     end
 
 end
